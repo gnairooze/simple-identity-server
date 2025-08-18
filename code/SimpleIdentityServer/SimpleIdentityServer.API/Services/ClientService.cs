@@ -105,7 +105,7 @@ public class ClientService : IClientService
         }
     }
 
-    public async Task<object> GetClientAsync(string clientId)
+    public async Task<object?> GetClientAsync(string clientId)
     {
         var client = await _applicationManager.FindByClientIdAsync(clientId);
         if (client == null)

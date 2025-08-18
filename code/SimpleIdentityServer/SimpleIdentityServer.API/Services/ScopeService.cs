@@ -65,7 +65,7 @@ public class ScopeService : IScopeService
         });
     }
 
-    public async Task<object> GetScopeAsync(string scopeName)
+    public async Task<object?> GetScopeAsync(string scopeName)
     {
         var scope = await _scopeManager.FindByNameAsync(scopeName);
         if (scope == null)
