@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using OpenIddict.Validation.AspNetCore;
@@ -50,6 +51,9 @@ builder.Services.AddOpenIddict()
         // Configure the validation handler to use System.Net.Http for introspection.
         options.UseSystemNetHttp();
     });
+
+// Register claims transformation service
+builder.Services.AddTransient<IClaimsTransformation, Resource.API.Services.ScopeClaimsTransformation>();
 
 builder.Services.AddAuthorization(options =>
 {

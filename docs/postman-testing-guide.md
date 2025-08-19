@@ -35,7 +35,7 @@ dotnet run
 cd code/SimpleIdentityServer/Resource.API
 dotnet run
 ```
-✅ Should be accessible at: `http://localhost:5198` (HTTP) or `https://localhost:7093` (HTTPS)
+✅ Should be accessible at `https://localhost:7093` (HTTPS)
 
 ## Step 2: Obtain Access Token
 
@@ -87,7 +87,7 @@ If you encounter SSL certificate errors:
 
 1. **Create a new request**
 2. **Set Method**: `GET`
-3. **Set URL**: `http://localhost:5198/WeatherForecast` (or `https://localhost:7093/WeatherForecast`)
+3. **Set URL**: `https://localhost:7093/WeatherForecast`
 4. **Configure Headers**:
    - `Authorization`: `Bearer YOUR_ACCESS_TOKEN_HERE`
    - `Accept`: `application/json`
