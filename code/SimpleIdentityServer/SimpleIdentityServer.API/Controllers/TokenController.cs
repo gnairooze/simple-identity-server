@@ -116,6 +116,12 @@ public class TokenController : ControllerBase
                 scopesToGrant = defaultScopes.ToImmutableArray();
             }
             
+            // Add individual scope claims to the identity for easier authorization
+            foreach (var scope in scopesToGrant)
+            {
+                identity.AddClaim("scope", scope);
+            }
+            
             principal.SetScopes(scopesToGrant);
 
             // Set the resources server identifier for each scope in the access token.

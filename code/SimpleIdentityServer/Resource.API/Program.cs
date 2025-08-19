@@ -52,9 +52,6 @@ builder.Services.AddOpenIddict()
         options.UseSystemNetHttp();
     });
 
-// Register claims transformation service
-builder.Services.AddTransient<IClaimsTransformation, Resource.API.Services.ScopeClaimsTransformation>();
-
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("RequireApi1Read", policy =>
