@@ -5,6 +5,7 @@ using Microsoft.IdentityModel.Tokens;
 using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
 using System.Security.Claims;
+using System.Collections.Immutable;
 
 namespace SimpleIdentityServer.API.Controllers;
 
@@ -62,6 +63,9 @@ public class TokenController : ControllerBase
                     }));
             }
 
+            // Note: OpenIddict automatically validates scopes against client permissions
+            // No custom validation needed here
+
             // Create a new ClaimsIdentity containing the claims that will be used to create an id_token, a token or a code.
             var identity = new ClaimsIdentity(
                 authenticationType: TokenValidationParameters.DefaultAuthenticationType,
@@ -99,11 +103,24 @@ public class TokenController : ControllerBase
             var principal = new ClaimsPrincipal(identity);
 
             // Set the list of scopes granted to the client application in the access token.
-            principal.SetScopes(request.GetScopes());
+            var scopesToGrant = request.GetScopes();
+            if (!scopesToGrant.Any())
+            {
+                // If no scopes requested, grant default scopes based on client permissions
+                var clientPermissions = await _applicationManager.GetPermissionsAsync(application);
+                var defaultScopes = clientPermissions
+                    .Where(p => p.StartsWith("scp:"))
+                    .Select(p => p.Substring(4)) // Remove "scp:" prefix
+                    .ToList();
+                
+                scopesToGrant = defaultScopes.ToImmutableArray();
+            }
+            
+            principal.SetScopes(scopesToGrant);
 
             // Set the resources server identifier for each scope in the access token.
             var resources = new List<string>();
-            foreach (var scope in request.GetScopes())
+            foreach (var scope in scopesToGrant)
             {
                 var resource = await _scopeManager.FindByNameAsync(scope);
                 if (resource != null)
@@ -112,7 +129,7 @@ public class TokenController : ControllerBase
                     resources.AddRange(resourceList);
                 }
             }
-            principal.SetResources(resources);
+            principal.SetResources(resources.Distinct());
 
             return SignIn(principal, OpenIddictServerAspNetCoreDefaults.AuthenticationScheme);
         }

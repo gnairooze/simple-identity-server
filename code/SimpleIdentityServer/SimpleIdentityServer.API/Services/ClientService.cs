@@ -17,19 +17,10 @@ public class ClientService : IClientService
         var serviceApiClient = await _applicationManager.FindByClientIdAsync("service-api");
         if (serviceApiClient != null)
         {
-            // Update existing client to include introspection permission
-            var permissions = await _applicationManager.GetPermissionsAsync(serviceApiClient);
-            if (!permissions.Contains(OpenIddictConstants.Permissions.Endpoints.Introspection))
-            {
-                var descriptor = new OpenIddictApplicationDescriptor();
-                await _applicationManager.PopulateAsync(descriptor, serviceApiClient);
-                descriptor.Permissions.Add(OpenIddictConstants.Permissions.Endpoints.Introspection);
-                await _applicationManager.UpdateAsync(serviceApiClient, descriptor);
-            }
-            
-            // Update other clients as well
-            await UpdateClientWithIntrospectionPermission("web-app");
-            await UpdateClientWithIntrospectionPermission("mobile-app");
+            // Update existing clients to fix scope permissions
+            await UpdateClientScopePermissions("service-api");
+            await UpdateClientScopePermissions("web-app");
+            await UpdateClientScopePermissions("mobile-app");
             return;
         }
 
@@ -47,8 +38,8 @@ public class ClientService : IClientService
                 OpenIddictConstants.Permissions.Scopes.Email,
                 OpenIddictConstants.Permissions.Scopes.Profile,
                 OpenIddictConstants.Permissions.Scopes.Roles,
-                "api1.read",
-                "api1.write"
+                "scp:api1.read",
+                "scp:api1.write"
             }
         });
 
@@ -66,7 +57,7 @@ public class ClientService : IClientService
                 OpenIddictConstants.Permissions.Scopes.Email,
                 OpenIddictConstants.Permissions.Scopes.Profile,
                 OpenIddictConstants.Permissions.Scopes.Roles,
-                "api1.read"
+                "scp:api1.read"
             }
         });
 
@@ -83,25 +74,47 @@ public class ClientService : IClientService
                 OpenIddictConstants.Permissions.Scopes.Email,
                 OpenIddictConstants.Permissions.Scopes.Profile,
                 OpenIddictConstants.Permissions.Scopes.Roles,
-                "api1.read",
-                "api1.write"
+                "scp:api1.read",
+                "scp:api1.write"
             }
         });
     }
 
-    private async Task UpdateClientWithIntrospectionPermission(string clientId)
+    private async Task UpdateClientScopePermissions(string clientId)
     {
         var client = await _applicationManager.FindByClientIdAsync(clientId);
-        if (client != null)
+        if (client == null) return;
+
+        var permissions = await _applicationManager.GetPermissionsAsync(client);
+        var needsUpdate = false;
+        var descriptor = new OpenIddictApplicationDescriptor();
+        await _applicationManager.PopulateAsync(descriptor, client);
+
+        // Check if we need to fix scope permissions (convert api1.read to scp:api1.read)
+        if (permissions.Contains("api1.read") && !permissions.Contains("scp:api1.read"))
         {
-            var permissions = await _applicationManager.GetPermissionsAsync(client);
-            if (!permissions.Contains(OpenIddictConstants.Permissions.Endpoints.Introspection))
-            {
-                var descriptor = new OpenIddictApplicationDescriptor();
-                await _applicationManager.PopulateAsync(descriptor, client);
-                descriptor.Permissions.Add(OpenIddictConstants.Permissions.Endpoints.Introspection);
-                await _applicationManager.UpdateAsync(client, descriptor);
-            }
+            descriptor.Permissions.Remove("api1.read");
+            descriptor.Permissions.Add("scp:api1.read");
+            needsUpdate = true;
+        }
+
+        if (permissions.Contains("api1.write") && !permissions.Contains("scp:api1.write"))
+        {
+            descriptor.Permissions.Remove("api1.write");
+            descriptor.Permissions.Add("scp:api1.write");
+            needsUpdate = true;
+        }
+
+        // Ensure introspection permission is present
+        if (!permissions.Contains(OpenIddictConstants.Permissions.Endpoints.Introspection))
+        {
+            descriptor.Permissions.Add(OpenIddictConstants.Permissions.Endpoints.Introspection);
+            needsUpdate = true;
+        }
+
+        if (needsUpdate)
+        {
+            await _applicationManager.UpdateAsync(client, descriptor);
         }
     }
 
