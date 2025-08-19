@@ -61,8 +61,8 @@ class Program
         {
             new KeyValuePair<string, string>("grant_type", "client_credentials"),
             new KeyValuePair<string, string>("client_id", ClientId),
-            new KeyValuePair<string, string>("client_secret", ClientSecret)/*,
-            new KeyValuePair<string, string>("scope", "api1.read")*/
+            new KeyValuePair<string, string>("client_secret", ClientSecret),
+            new KeyValuePair<string, string>("scope", "api1.read")
         });
 
         try
