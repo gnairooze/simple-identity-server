@@ -16,73 +16,83 @@ namespace SimpleIdentityServer.CLI
 
             // Application commands
             var appCommand = new Command("app", "Manage OpenIddict applications");
+
+            // List applications command
             var listAppsCommand = new Command("list", "List all applications");
+            listAppsCommand.SetHandler(appMgr.ListApplications);
+
+            // Get application command
             var getAppCommand = new Command("get", "Get application details");
-            var addAppCommand = new Command("add", "Add a new application");
-            var updateAppCommand = new Command("update", "Update an existing application");
-            var deleteAppCommand = new Command("delete", "Delete an application");
-
-            // Scope commands
-            var scopeCommand = new Command("scope", "Manage OpenIddict scopes");
-            var listScopesCommand = new Command("list", "List all scopes");
-            var getScopeCommand = new Command("get", "Get scope details");
-            var addScopeCommand = new Command("add", "Add a new scope");
-            var updateScopeCommand = new Command("update", "Update an existing scope");
-            var deleteScopeCommand = new Command("delete", "Delete a scope");
-
-            // Add options for commands
             getAppCommand.AddOption(new Option<string>("--client-id", "Client ID of the application") { IsRequired = true });
-            getScopeCommand.AddOption(new Option<string>("--name", "Name of the scope") { IsRequired = true });
+            getAppCommand.SetHandler(appMgr.GetApplication, getAppCommand.Options.OfType<Option<string>>().First());
 
+            // Add application command
+            var addAppCommand = new Command("add", "Add a new application");
             addAppCommand.AddOption(new Option<string>("--client-id", "Client ID") { IsRequired = true });
             addAppCommand.AddOption(new Option<string>("--client-secret", "Client secret") { IsRequired = true });
             addAppCommand.AddOption(new Option<string>("--display-name", "Display name") { IsRequired = true });
             addAppCommand.AddOption(new Option<string[]>("--permissions", "Permissions (space-separated)") { IsRequired = true });
-
-            addScopeCommand.AddOption(new Option<string>("--name", "Scope name") { IsRequired = true });
-            addScopeCommand.AddOption(new Option<string>("--display-name", "Display name") { IsRequired = true });
-            addScopeCommand.AddOption(new Option<string[]>("--resources", "Resources (space-separated)") { IsRequired = true });
-
-            updateAppCommand.AddOption(new Option<string>("--client-id", "Client ID") { IsRequired = true });
-            updateAppCommand.AddOption(new Option<string>("--client-secret", "Client secret"));
-            updateAppCommand.AddOption(new Option<string>("--display-name", "Display name"));
-            updateAppCommand.AddOption(new Option<string[]>("--permissions", "Permissions (space-separated)"));
-
-            updateScopeCommand.AddOption(new Option<string>("--name", "Scope name") { IsRequired = true });
-            updateScopeCommand.AddOption(new Option<string>("--display-name", "Display name"));
-            updateScopeCommand.AddOption(new Option<string[]>("--resources", "Resources (space-separated)"));
-
-            deleteAppCommand.AddOption(new Option<string>("--client-id", "Client ID") { IsRequired = true });
-            deleteScopeCommand.AddOption(new Option<string>("--name", "Scope name") { IsRequired = true });
-
-            // Set handlers
-            listAppsCommand.SetHandler(appMgr.ListApplications);
-            getAppCommand.SetHandler(appMgr.GetApplication, getAppCommand.Options.OfType<Option<string>>().First());
             addAppCommand.SetHandler(appMgr.AddApplication,
                 addAppCommand.Options.OfType<Option<string>>().ElementAt(0),
                 addAppCommand.Options.OfType<Option<string>>().ElementAt(1),
                 addAppCommand.Options.OfType<Option<string>>().ElementAt(2),
                 addAppCommand.Options.OfType<Option<string[]>>().First());
+
+            // Update application command
+            var updateAppCommand = new Command("update", "Update an existing application");
+            updateAppCommand.AddOption(new Option<string>("--client-id", "Client ID") { IsRequired = true });
+            updateAppCommand.AddOption(new Option<string>("--client-secret", "Client secret"));
+            updateAppCommand.AddOption(new Option<string>("--display-name", "Display name"));
+            updateAppCommand.AddOption(new Option<string[]>("--permissions", "Permissions (space-separated)"));
             updateAppCommand.SetHandler(appMgr.UpdateApplication,
                 updateAppCommand.Options.OfType<Option<string>>().ElementAt(0),
                 updateAppCommand.Options.OfType<Option<string>>().ElementAt(1),
                 updateAppCommand.Options.OfType<Option<string>>().ElementAt(2),
                 updateAppCommand.Options.OfType<Option<string[]>>().First());
+
+            // Delete application command
+            var deleteAppCommand = new Command("delete", "Delete an application");
+            deleteAppCommand.AddOption(new Option<string>("--client-id", "Client ID") { IsRequired = true });
             deleteAppCommand.SetHandler(appMgr.DeleteApplication, deleteAppCommand.Options.OfType<Option<string>>().First());
 
+            // Scope commands
+            var scopeCommand = new Command("scope", "Manage OpenIddict scopes");
+
+            // List scopes command
+            var listScopesCommand = new Command("list", "List all scopes");
             listScopesCommand.SetHandler(scpMgr.ListScopes);
+
+            // Get scope command
+            var getScopeCommand = new Command("get", "Get scope details");
+            getScopeCommand.AddOption(new Option<string>("--name", "Name of the scope") { IsRequired = true });
             getScopeCommand.SetHandler(scpMgr.GetScope, getScopeCommand.Options.OfType<Option<string>>().First());
+
+            // Add scope command
+            var addScopeCommand = new Command("add", "Add a new scope");
+            addScopeCommand.AddOption(new Option<string>("--name", "Scope name") { IsRequired = true });
+            addScopeCommand.AddOption(new Option<string>("--display-name", "Display name") { IsRequired = true });
+            addScopeCommand.AddOption(new Option<string[]>("--resources", "Resources (space-separated)") { IsRequired = true });
             addScopeCommand.SetHandler(scpMgr.AddScope,
                 addScopeCommand.Options.OfType<Option<string>>().ElementAt(0),
                 addScopeCommand.Options.OfType<Option<string>>().ElementAt(1),
                 addScopeCommand.Options.OfType<Option<string[]>>().First());
+
+            // Update scope command
+            var updateScopeCommand = new Command("update", "Update an existing scope");
+            updateScopeCommand.AddOption(new Option<string>("--name", "Scope name") { IsRequired = true });
+            updateScopeCommand.AddOption(new Option<string>("--display-name", "Display name"));
+            updateScopeCommand.AddOption(new Option<string[]>("--resources", "Resources (space-separated)"));
             updateScopeCommand.SetHandler(scpMgr.UpdateScope,
                 updateScopeCommand.Options.OfType<Option<string>>().ElementAt(0),
                 updateScopeCommand.Options.OfType<Option<string>>().ElementAt(1),
                 updateScopeCommand.Options.OfType<Option<string[]>>().First());
+
+            // Delete scope command
+            var deleteScopeCommand = new Command("delete", "Delete a scope");
+            deleteScopeCommand.AddOption(new Option<string>("--name", "Scope name") { IsRequired = true });
             deleteScopeCommand.SetHandler(scpMgr.DeleteScope, deleteScopeCommand.Options.OfType<Option<string>>().First());
 
-            // Add commands to root
+            // Add commands to parent commands
             appCommand.AddCommand(listAppsCommand);
             appCommand.AddCommand(getAppCommand);
             appCommand.AddCommand(addAppCommand);
