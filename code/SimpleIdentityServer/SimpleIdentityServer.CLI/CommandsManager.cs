@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace SimpleIdentityServer.CLI
 {
-    internal class CommandsManager
+    public class CommandsManager
     {
         public static RootCommand PrepareCommands(ApplicationManagement appMgr, ScopeManagement scpMgr)
         {

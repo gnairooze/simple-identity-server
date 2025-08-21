@@ -1,21 +1,32 @@
 ﻿
 using SimpleIdentityServer.CLI.Business;
+using SimpleIdentityServer.CLI.Test;
 
 // Run all tests
 Console.WriteLine("Starting CLI Tests...\n");
 
 await Test01_ListApplications();
-await Test02_ListScopes();
 await Test03_AddApplication();
 await Test04_GetApplication();
 await Test05_UpdateApplication();
 await Test06_DeleteApplication();
+
+await Test02_ListScopes();
 await Test07_AddScope();
 await Test08_GetScope();
 await Test09_UpdateScope();
 await Test10_DeleteScope();
 
-Console.WriteLine("\nAll tests completed!");
+Console.WriteLine("\n" + new string('=', 50));
+Console.WriteLine("BUSINESS LOGIC TESTS COMPLETED");
+Console.WriteLine(new string('=', 50) + "\n");
+
+// Run command arguments tests
+await CommandArgumentsTests.RunAllCommandArgumentTests();
+
+Console.WriteLine("\n" + new string('=', 50));
+Console.WriteLine("ALL TESTS COMPLETED!");
+Console.WriteLine(new string('=', 50));
 
 // Test 01: List all applications
 async Task Test01_ListApplications()
