@@ -2,7 +2,7 @@
   "profiles": {
     "SimpleIdentityServer.CLI": {
       "commandName": "Project",
-      "commandLineArgs": "app list"
+      "commandLineArgs": "app get --client-id service-api"
     }
   }
 }
