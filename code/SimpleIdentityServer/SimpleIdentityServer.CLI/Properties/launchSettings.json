@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "SimpleIdentityServer.CLI": {
+      "commandName": "Project",
+      "commandLineArgs": "app list"
+    }
+  }
+}

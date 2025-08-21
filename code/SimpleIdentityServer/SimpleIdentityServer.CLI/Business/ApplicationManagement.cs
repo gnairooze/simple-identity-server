@@ -20,8 +20,6 @@ namespace SimpleIdentityServer.CLI.Business
         {
             try
             {
-                
-
                 Console.WriteLine("OpenIddict Applications:");
                 Console.WriteLine("=======================");
 
@@ -36,6 +34,22 @@ namespace SimpleIdentityServer.CLI.Business
                     Console.WriteLine($"Permissions: {string.Join(", ", permissions)}");
                     Console.WriteLine("---");
                 }
+            }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("ConnectionString"))
+            {
+                Console.WriteLine("Database Connection Error:");
+                Console.WriteLine("=========================");
+                Console.WriteLine("The application cannot connect to the database. This usually means:");
+                Console.WriteLine("1. The appsettings.json file is missing or not found");
+                Console.WriteLine("2. The connection string is not properly configured");
+                Console.WriteLine("3. The database server is not running");
+                Console.WriteLine();
+                Console.WriteLine($"Error details: {ex.Message}");
+                Console.WriteLine();
+                Console.WriteLine("Please ensure:");
+                Console.WriteLine("- appsettings.json exists in the application directory");
+                Console.WriteLine("- The DefaultConnection string is properly configured");
+                Console.WriteLine("- The database server is accessible");
             }
             catch (Exception ex)
             {
