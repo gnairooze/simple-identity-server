@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace SimpleIdentityServer.CLI.Business
 {
-    internal class ScopeManagement
+    public class ScopeManagement
     {
         private IOpenIddictScopeManager _scopeManager;
 

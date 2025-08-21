@@ -11,7 +11,7 @@ using SimpleIdentityServer.CLI.Data;
 
 namespace SimpleIdentityServer.CLI;
 
-class Program
+public class Program
 {
     static async Task<int> Main(string[] args)
     {
@@ -22,7 +22,7 @@ class Program
         return await rootCommand.InvokeAsync(args);
     }
     
-    static void CreateManagers(out ApplicationManagement appMgr, out ScopeManagement scpMgr)
+    public static void CreateManagers(out ApplicationManagement appMgr, out ScopeManagement scpMgr)
     {
         var host = CreateHostBuilder().Build();
         var applicationManager = host.Services.GetRequiredService<IOpenIddictApplicationManager>();
@@ -32,7 +32,7 @@ class Program
         scpMgr = new(scopeManager);
     }
 
-    static IHostBuilder CreateHostBuilder()
+    public static IHostBuilder CreateHostBuilder()
     {
         return Host.CreateDefaultBuilder()
             .ConfigureServices((context, services) =>

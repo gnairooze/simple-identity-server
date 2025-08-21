@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace SimpleIdentityServer.CLI.Business
 {
-    internal class ApplicationManagement
+    public class ApplicationManagement
     {
         private IOpenIddictApplicationManager _applicationManager;
 
