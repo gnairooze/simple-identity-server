@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using OpenIddict.Abstractions;
 using OpenIddict.Server.AspNetCore;
@@ -28,6 +29,7 @@ public class TokenController : ControllerBase
     }
 
     [HttpPost("token")]
+    [EnableRateLimiting("TokenPolicy")]
     public async Task<IActionResult> Token()
     {
         var request = HttpContext.GetOpenIddictServerRequest();
@@ -138,6 +140,7 @@ public class TokenController : ControllerBase
     }
 
     [HttpPost("introspect")]
+    [EnableRateLimiting("IntrospectionPolicy")]
     public async Task<IActionResult> Introspect()
     {
         var request = HttpContext.GetOpenIddictServerRequest();

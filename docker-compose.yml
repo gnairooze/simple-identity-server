@@ -1,0 +1,152 @@
+services:
+  # Load Balancer - NGINX
+  nginx-lb:
+    image: nginx:alpine
+    container_name: simple-identity-server-lb
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - api-instance-1
+      - api-instance-2
+      - api-instance-3
+    networks:
+      simple-identity-net:
+        ipv4_address: 172.25.0.10
+    restart: unless-stopped
+
+  # API Instance 1
+  api-instance-1:
+    build:
+      context: ./code/SimpleIdentityServer/SimpleIdentityServer.API
+      dockerfile: Dockerfile
+    container_name: simple-identity-server-api-1
+    ports:
+      - "8081:80"  # Direct access for testing
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=SimpleIdentityServer;MultipleActiveResultSets=true;uid=sa;pwd=StrongPassword123!;TrustServerCertificate=true;Encrypt=false
+      - LoadBalancer__EnableForwardedHeaders=true
+      - LoadBalancer__TrustedProxies__0=172.25.0.10
+      - LoadBalancer__ForwardLimit=2
+      - LoadBalancer__RequireHeaderSymmetry=false
+    depends_on:
+      - sqlserver
+    networks:
+      simple-identity-net:
+        ipv4_address: 172.25.0.11
+    restart: unless-stopped
+
+  # API Instance 2
+  api-instance-2:
+    build:
+      context: ./code/SimpleIdentityServer/SimpleIdentityServer.API
+      dockerfile: Dockerfile
+    container_name: simple-identity-server-api-2
+    ports:
+      - "8082:80"  # Direct access for testing
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=SimpleIdentityServer;MultipleActiveResultSets=true;uid=sa;pwd=StrongPassword123!;TrustServerCertificate=true;Encrypt=false
+      - LoadBalancer__EnableForwardedHeaders=true
+      - LoadBalancer__TrustedProxies__0=172.25.0.10
+      - LoadBalancer__ForwardLimit=2
+      - LoadBalancer__RequireHeaderSymmetry=false
+    depends_on:
+      - sqlserver
+    networks:
+      simple-identity-net:
+        ipv4_address: 172.25.0.12
+    restart: unless-stopped
+
+  # API Instance 3
+  api-instance-3:
+    build:
+      context: ./code/SimpleIdentityServer/SimpleIdentityServer.API
+      dockerfile: Dockerfile
+    container_name: simple-identity-server-api-3
+    ports:
+      - "8083:80"  # Direct access for testing
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=SimpleIdentityServer;MultipleActiveResultSets=true;uid=sa;pwd=StrongPassword123!;TrustServerCertificate=true;Encrypt=false
+      - LoadBalancer__EnableForwardedHeaders=true
+      - LoadBalancer__TrustedProxies__0=172.25.0.10
+      - LoadBalancer__ForwardLimit=2
+      - LoadBalancer__RequireHeaderSymmetry=false
+    depends_on:
+      - sqlserver
+    networks:
+      simple-identity-net:
+        ipv4_address: 172.25.0.13
+    restart: unless-stopped
+
+  # SQL Server Database
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: simple-identity-server-db
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=StrongPassword123!
+      - MSSQL_PID=Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    networks:
+      simple-identity-net:
+        ipv4_address: 172.25.0.20
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P StrongPassword123! -Q 'SELECT 1'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Health Check Service (Optional - for monitoring)
+  health-check:
+    image: curlimages/curl:latest
+    container_name: simple-identity-server-health
+    command: >
+      sh -c "
+      while true; do
+        echo '=== Health Check ===' 
+        echo 'Load Balancer Health:'
+        curl -f http://172.25.0.10/health || echo 'LB Health Check Failed'
+        echo 'API Instance 1:'
+        curl -f http://172.25.0.11/health || echo 'API 1 Health Check Failed'
+        echo 'API Instance 2:'
+        curl -f http://172.25.0.12/health || echo 'API 2 Health Check Failed'
+        echo 'API Instance 3:'
+        curl -f http://172.25.0.13/health || echo 'API 3 Health Check Failed'
+        echo 'Sleeping for 60 seconds...'
+        sleep 60
+      done"
+    depends_on:
+      - nginx-lb
+      - api-instance-1
+      - api-instance-2
+      - api-instance-3
+    networks:
+      simple-identity-net:
+        ipv4_address: 172.25.0.30
+    restart: unless-stopped
+
+networks:
+  simple-identity-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16
+          gateway: 172.25.0.1
+
+volumes:
+  sqlserver_data:
+    driver: local
