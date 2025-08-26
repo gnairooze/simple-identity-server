@@ -115,18 +115,27 @@ services:
   health-check:
     image: curlimages/curl:latest
     container_name: simple-identity-server-health
+    extra_hosts:
+      - "lb.dev.test:172.25.0.10"
+    volumes:
+      - ./nginx/ssl/dev-test-ca.crt:/usr/local/share/ca-certificates/nginx-ca.crt:ro
     command: >
       sh -c "
+      # Copy certificate to ca-certificates and update
+      cp /usr/local/share/ca-certificates/nginx-ca.crt /etc/ssl/certs/ 2>/dev/null || true;
+      update-ca-certificates 2>/dev/null || true;
+      # Alternative: use the certificate directly with curl
       while true; do
         echo '=== Health Check ===' 
+        echo \"Timestamp: \$(date)\"
         echo 'Load Balancer Health:'
-        curl -f http://172.25.0.10/health || echo 'LB Health Check Failed'
+        curl -f --cacert /usr/local/share/ca-certificates/nginx-ca.crt https://lb.dev.test/health || echo 'LB Health Check Failed'
         echo 'API Instance 1:'
-        curl -f http://172.25.0.11/health || echo 'API 1 Health Check Failed'
+        curl -f http://172.25.0.11/home/health || echo 'API 1 Health Check Failed'
         echo 'API Instance 2:'
-        curl -f http://172.25.0.12/health || echo 'API 2 Health Check Failed'
+        curl -f http://172.25.0.12/home/health || echo 'API 2 Health Check Failed'
         echo 'API Instance 3:'
-        curl -f http://172.25.0.13/health || echo 'API 3 Health Check Failed'
+        curl -f http://172.25.0.13/home/health || echo 'API 3 Health Check Failed'
         echo 'Sleeping for 60 seconds...'
         sleep 60
       done"
