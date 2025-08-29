@@ -38,6 +38,7 @@ services:
       - LoadBalancer__ForwardLimit=2
       - LoadBalancer__RequireHeaderSymmetry=false
       - CERT_PASSWORD=SharedCertPassword123!
+      - NODE_NAME=api-instance-1
     volumes:
       - shared_certs:/app/certs
     depends_on:
@@ -64,6 +65,7 @@ services:
       - LoadBalancer__ForwardLimit=2
       - LoadBalancer__RequireHeaderSymmetry=false
       - CERT_PASSWORD=SharedCertPassword123!
+      - NODE_NAME=api-instance-2
     volumes:
       - shared_certs:/app/certs
     depends_on:
@@ -90,6 +92,7 @@ services:
       - LoadBalancer__ForwardLimit=2
       - LoadBalancer__RequireHeaderSymmetry=false
       - CERT_PASSWORD=SharedCertPassword123!
+      - NODE_NAME=api-instance-3
     volumes:
       - shared_certs:/app/certs
     depends_on:
