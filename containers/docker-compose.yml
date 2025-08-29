@@ -1,3 +1,5 @@
+name: simple-identity-env
+
 services:
   # Load Balancer - NGINX
   nginx-lb:
@@ -22,7 +24,7 @@ services:
   # API Instance 1
   api-instance-1:
     build:
-      context: ./code/SimpleIdentityServer/SimpleIdentityServer.API
+      context: ../code/SimpleIdentityServer/SimpleIdentityServer.API
       dockerfile: Dockerfile
     container_name: simple-identity-server-api-1
     ports:
@@ -35,6 +37,9 @@ services:
       - LoadBalancer__TrustedProxies__0=172.25.0.10
       - LoadBalancer__ForwardLimit=2
       - LoadBalancer__RequireHeaderSymmetry=false
+      - CERT_PASSWORD=SharedCertPassword123!
+    volumes:
+      - shared_certs:/app/certs
     depends_on:
       - sqlserver
     networks:
@@ -45,7 +50,7 @@ services:
   # API Instance 2
   api-instance-2:
     build:
-      context: ./code/SimpleIdentityServer/SimpleIdentityServer.API
+      context: ../code/SimpleIdentityServer/SimpleIdentityServer.API
       dockerfile: Dockerfile
     container_name: simple-identity-server-api-2
     ports:
@@ -58,6 +63,9 @@ services:
       - LoadBalancer__TrustedProxies__0=172.25.0.10
       - LoadBalancer__ForwardLimit=2
       - LoadBalancer__RequireHeaderSymmetry=false
+      - CERT_PASSWORD=SharedCertPassword123!
+    volumes:
+      - shared_certs:/app/certs
     depends_on:
       - sqlserver
     networks:
@@ -68,7 +76,7 @@ services:
   # API Instance 3
   api-instance-3:
     build:
-      context: ./code/SimpleIdentityServer/SimpleIdentityServer.API
+      context: ../code/SimpleIdentityServer/SimpleIdentityServer.API
       dockerfile: Dockerfile
     container_name: simple-identity-server-api-3
     ports:
@@ -81,6 +89,9 @@ services:
       - LoadBalancer__TrustedProxies__0=172.25.0.10
       - LoadBalancer__ForwardLimit=2
       - LoadBalancer__RequireHeaderSymmetry=false
+      - CERT_PASSWORD=SharedCertPassword123!
+    volumes:
+      - shared_certs:/app/certs
     depends_on:
       - sqlserver
     networks:
@@ -159,4 +170,6 @@ networks:
 
 volumes:
   sqlserver_data:
+    driver: local
+  shared_certs:
     driver: local

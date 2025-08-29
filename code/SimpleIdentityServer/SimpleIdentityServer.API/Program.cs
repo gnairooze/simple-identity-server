@@ -270,8 +270,20 @@ builder.Services.AddOpenIddict()
         options.AllowClientCredentialsFlow();
 
         // Register the signing and encryption credentials
-        options.AddDevelopmentEncryptionCertificate()
-               .AddDevelopmentSigningCertificate();
+        // Use shared keys stored in the database for load balancer scenarios
+        if (builder.Environment.IsProduction())
+        {
+            // In production, use certificates from database or shared location
+            // This ensures all instances use the same signing keys
+            options.AddEncryptionCertificate(GetOrCreateEncryptionCertificate())
+                   .AddSigningCertificate(GetOrCreateSigningCertificate());
+        }
+        else
+        {
+            // In development, use development certificates (single instance)
+            options.AddDevelopmentEncryptionCertificate()
+                   .AddDevelopmentSigningCertificate();
+        }
 
         // Register the ASP.NET Core host and configure the ASP.NET Core options
         options.UseAspNetCore()
@@ -282,9 +294,8 @@ builder.Services.AddOpenIddict()
                .DisableTransportSecurityRequirement();
 
         // Configure the OpenIddict server to issue JWT tokens
-        options.AddEphemeralEncryptionKey()
-               .AddEphemeralSigningKey()
-               .DisableAccessTokenEncryption()
+        // Remove ephemeral keys - they cause issues in load balanced scenarios
+        options.DisableAccessTokenEncryption()
                .SetAccessTokenLifetime(TimeSpan.FromHours(1))
                .SetRefreshTokenLifetime(TimeSpan.FromDays(14));
     })
@@ -297,6 +308,82 @@ builder.Services.AddOpenIddict()
 // Register custom services
 builder.Services.AddScoped<IClientService, ClientService>();
 builder.Services.AddScoped<IScopeService, ScopeService>();
+
+// Helper methods for certificate management in load balanced scenarios
+static System.Security.Cryptography.X509Certificates.X509Certificate2 GetOrCreateEncryptionCertificate()
+{
+    // For production, you should load certificates from:
+    // 1. Azure Key Vault
+    // 2. Shared file system mounted to all containers
+    // 3. Environment variables
+    // 4. Database (for this example, we'll use a simple approach)
+    
+    var certPath = "/app/certs/encryption.pfx";
+    var certPassword = Environment.GetEnvironmentVariable("CERT_PASSWORD") ?? "DefaultPassword123!";
+    
+    if (File.Exists(certPath))
+    {
+        return new System.Security.Cryptography.X509Certificates.X509Certificate2(certPath, certPassword);
+    }
+    
+    // If certificate doesn't exist, create a self-signed one and save it
+    // This is a simplified approach - in production, use proper certificate management
+    var cert = CreateSelfSignedCertificate("CN=SimpleIdentityServer-Encryption");
+    
+    // Ensure directory exists
+    Directory.CreateDirectory(Path.GetDirectoryName(certPath)!);
+    
+    // Save certificate for other instances to use
+    File.WriteAllBytes(certPath, cert.Export(System.Security.Cryptography.X509Certificates.X509ContentType.Pfx, certPassword));
+    
+    return cert;
+}
+
+static System.Security.Cryptography.X509Certificates.X509Certificate2 GetOrCreateSigningCertificate()
+{
+    var certPath = "/app/certs/signing.pfx";
+    var certPassword = Environment.GetEnvironmentVariable("CERT_PASSWORD") ?? "DefaultPassword123!";
+    
+    if (File.Exists(certPath))
+    {
+        return new System.Security.Cryptography.X509Certificates.X509Certificate2(certPath, certPassword);
+    }
+    
+    // If certificate doesn't exist, create a self-signed one and save it
+    var cert = CreateSelfSignedCertificate("CN=SimpleIdentityServer-Signing");
+    
+    // Ensure directory exists
+    Directory.CreateDirectory(Path.GetDirectoryName(certPath)!);
+    
+    // Save certificate for other instances to use
+    File.WriteAllBytes(certPath, cert.Export(System.Security.Cryptography.X509Certificates.X509ContentType.Pfx, certPassword));
+    
+    return cert;
+}
+
+static System.Security.Cryptography.X509Certificates.X509Certificate2 CreateSelfSignedCertificate(string subjectName)
+{
+    using var rsa = System.Security.Cryptography.RSA.Create(2048);
+    var request = new System.Security.Cryptography.X509Certificates.CertificateRequest(
+        subjectName, 
+        rsa, 
+        System.Security.Cryptography.HashAlgorithmName.SHA256, 
+        System.Security.Cryptography.RSASignaturePadding.Pkcs1);
+
+    request.CertificateExtensions.Add(
+        new System.Security.Cryptography.X509Certificates.X509KeyUsageExtension(
+            System.Security.Cryptography.X509Certificates.X509KeyUsageFlags.DigitalSignature | 
+            System.Security.Cryptography.X509Certificates.X509KeyUsageFlags.KeyEncipherment, 
+            critical: false));
+
+    var certificate = request.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddYears(2));
+    
+    // Return a new certificate with the private key
+    return new System.Security.Cryptography.X509Certificates.X509Certificate2(
+        certificate.Export(System.Security.Cryptography.X509Certificates.X509ContentType.Pfx), 
+        (string?)null, 
+        System.Security.Cryptography.X509Certificates.X509KeyStorageFlags.Exportable);
+}
 
 var app = builder.Build();
 
