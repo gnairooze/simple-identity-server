@@ -156,12 +156,16 @@ services:
         echo \"Timestamp: \$(date)\"
         echo 'Load Balancer Health:'
         curl -f --cacert /usr/local/share/ca-certificates/nginx-ca.crt https://identity.dev.test/health || echo 'LB Health Check Failed'
+        echo ''
         echo 'API Instance 1:'
         curl -f -k https://172.25.0.11:443/home/health || echo 'API 1 Health Check Failed'
+        echo ''
         echo 'API Instance 2:'
         curl -f -k https://172.25.0.12:443/home/health || echo 'API 2 Health Check Failed'
+        echo ''
         echo 'API Instance 3:'
         curl -f -k https://172.25.0.13:443/home/health || echo 'API 3 Health Check Failed'
+        echo ''
         echo 'Sleeping for 60 seconds...'
         sleep 60
       done"
