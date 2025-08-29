@@ -28,10 +28,10 @@ services:
       dockerfile: Dockerfile
     container_name: simple-identity-server-api-1
     ports:
-      - "8081:80"  # Direct access for testing
+      - "8081:443"  # Direct access for testing
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ASPNETCORE_URLS=http://+:80
+      - ASPNETCORE_URLS=https://+:443
       - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=SimpleIdentityServer;MultipleActiveResultSets=true;uid=sa;pwd=StrongPassword123!;TrustServerCertificate=true;Encrypt=false
       - LoadBalancer__EnableForwardedHeaders=true
       - LoadBalancer__TrustedProxies__0=172.25.0.10
@@ -39,8 +39,12 @@ services:
       - LoadBalancer__RequireHeaderSymmetry=false
       - CERT_PASSWORD=SharedCertPassword123!
       - NODE_NAME=api-instance-1
+      - Kestrel__Certificates__Default__Path=/app/certs/identity-dev-test.crt
+      - Kestrel__Certificates__Default__KeyPath=/app/certs/identity-dev-test.key
     volumes:
       - shared_certs:/app/certs
+      - ./nginx/ssl/identity-dev-test.crt:/app/certs/identity-dev-test.crt:ro
+      - ./nginx/ssl/identity-dev-test.key:/app/certs/identity-dev-test.key:ro
     depends_on:
       - sqlserver
     networks:
@@ -55,10 +59,10 @@ services:
       dockerfile: Dockerfile
     container_name: simple-identity-server-api-2
     ports:
-      - "8082:80"  # Direct access for testing
+      - "8082:443"  # Direct access for testing
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ASPNETCORE_URLS=http://+:80
+      - ASPNETCORE_URLS=https://+:443
       - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=SimpleIdentityServer;MultipleActiveResultSets=true;uid=sa;pwd=StrongPassword123!;TrustServerCertificate=true;Encrypt=false
       - LoadBalancer__EnableForwardedHeaders=true
       - LoadBalancer__TrustedProxies__0=172.25.0.10
@@ -66,8 +70,12 @@ services:
       - LoadBalancer__RequireHeaderSymmetry=false
       - CERT_PASSWORD=SharedCertPassword123!
       - NODE_NAME=api-instance-2
+      - Kestrel__Certificates__Default__Path=/app/certs/identity-dev-test.crt
+      - Kestrel__Certificates__Default__KeyPath=/app/certs/identity-dev-test.key
     volumes:
       - shared_certs:/app/certs
+      - ./nginx/ssl/identity-dev-test.crt:/app/certs/identity-dev-test.crt:ro
+      - ./nginx/ssl/identity-dev-test.key:/app/certs/identity-dev-test.key:ro
     depends_on:
       - sqlserver
     networks:
@@ -82,10 +90,10 @@ services:
       dockerfile: Dockerfile
     container_name: simple-identity-server-api-3
     ports:
-      - "8083:80"  # Direct access for testing
+      - "8083:443"  # Direct access for testing
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ASPNETCORE_URLS=http://+:80
+      - ASPNETCORE_URLS=https://+:443
       - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=SimpleIdentityServer;MultipleActiveResultSets=true;uid=sa;pwd=StrongPassword123!;TrustServerCertificate=true;Encrypt=false
       - LoadBalancer__EnableForwardedHeaders=true
       - LoadBalancer__TrustedProxies__0=172.25.0.10
@@ -93,8 +101,12 @@ services:
       - LoadBalancer__RequireHeaderSymmetry=false
       - CERT_PASSWORD=SharedCertPassword123!
       - NODE_NAME=api-instance-3
+      - Kestrel__Certificates__Default__Path=/app/certs/identity-dev-test.crt
+      - Kestrel__Certificates__Default__KeyPath=/app/certs/identity-dev-test.key
     volumes:
       - shared_certs:/app/certs
+      - ./nginx/ssl/identity-dev-test.crt:/app/certs/identity-dev-test.crt:ro
+      - ./nginx/ssl/identity-dev-test.key:/app/certs/identity-dev-test.key:ro
     depends_on:
       - sqlserver
     networks:
@@ -130,9 +142,9 @@ services:
     image: curlimages/curl:latest
     container_name: simple-identity-server-health
     extra_hosts:
-      - "lb.dev.test:172.25.0.10"
+      - "identity.dev.test:172.25.0.10"
     volumes:
-      - ./nginx/ssl/dev-test-ca.crt:/usr/local/share/ca-certificates/nginx-ca.crt:ro
+      - ./nginx/ssl/identity-dev-test-ca.crt:/usr/local/share/ca-certificates/nginx-ca.crt:ro
     command: >
       sh -c "
       # Copy certificate to ca-certificates and update
@@ -143,13 +155,13 @@ services:
         echo '=== Health Check ===' 
         echo \"Timestamp: \$(date)\"
         echo 'Load Balancer Health:'
-        curl -f --cacert /usr/local/share/ca-certificates/nginx-ca.crt https://lb.dev.test/health || echo 'LB Health Check Failed'
+        curl -f --cacert /usr/local/share/ca-certificates/nginx-ca.crt https://identity.dev.test/health || echo 'LB Health Check Failed'
         echo 'API Instance 1:'
-        curl -f http://172.25.0.11/home/health || echo 'API 1 Health Check Failed'
+        curl -f -k https://172.25.0.11:443/home/health || echo 'API 1 Health Check Failed'
         echo 'API Instance 2:'
-        curl -f http://172.25.0.12/home/health || echo 'API 2 Health Check Failed'
+        curl -f -k https://172.25.0.12:443/home/health || echo 'API 2 Health Check Failed'
         echo 'API Instance 3:'
-        curl -f http://172.25.0.13/home/health || echo 'API 3 Health Check Failed'
+        curl -f -k https://172.25.0.13:443/home/health || echo 'API 3 Health Check Failed'
         echo 'Sleeping for 60 seconds...'
         sleep 60
       done"
