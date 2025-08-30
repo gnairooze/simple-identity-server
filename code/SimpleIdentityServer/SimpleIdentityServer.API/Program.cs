@@ -22,6 +22,16 @@ var builder = WebApplication.CreateBuilder(args);
 // Configure Serilog for Security Logging
 ConfigureSerilog(builder);
 
+// Configure ASP.NET Core logging to enable debug level for debug logging middleware
+builder.Logging.ClearProviders();
+builder.Logging.AddConfiguration(builder.Configuration.GetSection("Logging"));
+if (builder.Environment.IsDevelopment())
+{
+    // Enable debug logging in development
+    builder.Logging.SetMinimumLevel(LogLevel.Debug);
+    builder.Logging.AddFilter("SimpleIdentityServer.API.Middleware.DebugLoggingMiddleware", LogLevel.Debug);
+}
+
 // Add services to the container.
 builder.Services.AddControllers(options =>
 {
@@ -410,6 +420,9 @@ if (loadBalancerConfig.EnableForwardedHeaders)
 
 app.UseHttpsRedirection();
 
+// Add debug logging middleware - should be very early in pipeline to capture all requests/responses
+app.UseMiddleware<DebugLoggingMiddleware>();
+
 // Add security monitoring middleware - should be early in pipeline
 app.UseMiddleware<SecurityMonitoringMiddleware>();
 
@@ -475,7 +488,9 @@ static void ConfigureSerilog(WebApplicationBuilder builder)
         .ReadFrom.Configuration(builder.Configuration)
         .Enrich.WithProperty("NodeName", nodeName)
         .Enrich.FromLogContext()
+        .MinimumLevel.Debug() // Enable debug level logging
         .WriteTo.Console(
+            restrictedToMinimumLevel: builder.Environment.IsDevelopment() ? LogEventLevel.Debug : LogEventLevel.Information,
             outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}")
         .WriteTo.MSSqlServer(
             connectionString: connectionString,

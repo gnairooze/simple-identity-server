@@ -122,6 +122,7 @@ services:
       - ACCEPT_EULA=Y
       - SA_PASSWORD=StrongPassword123!
       - MSSQL_PID=Express
+      - MSSQL_MEMORY_LIMIT_MB=2048
     ports:
       - "1433:1433"
     volumes:
@@ -130,8 +131,14 @@ services:
       simple-identity-net:
         ipv4_address: 172.25.0.20
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
     healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P StrongPassword123! -Q 'SELECT 1'"]
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P StrongPassword123! -Q 'SELECT 1' -C"]
       interval: 30s
       timeout: 10s
       retries: 5

@@ -2,6 +2,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Serilog;
 using System.Collections.Concurrent;
 using System.Net;
+using Microsoft.Data.SqlClient;
 
 namespace SimpleIdentityServer.API.Middleware;
 
@@ -13,22 +14,32 @@ public class SecurityMonitoringMiddleware
     private readonly RequestDelegate _next;
     private readonly ILogger<SecurityMonitoringMiddleware> _logger;
     private readonly IMemoryCache _cache;
+    private readonly IConfiguration _configuration;
     
     // In-memory storage for tracking token requests per client
     private static readonly ConcurrentDictionary<string, TokenRequestTracker> _tokenTrackers = new();
+    
+    // Static flag to ensure database initialization runs only once
+    private static bool _databaseInitialized = false;
+    private static readonly object _initializationLock = new();
 
     public SecurityMonitoringMiddleware(
         RequestDelegate next, 
         ILogger<SecurityMonitoringMiddleware> logger,
-        IMemoryCache cache)
+        IMemoryCache cache,
+        IConfiguration configuration)
     {
         _next = next;
         _logger = logger;
         _cache = cache;
+        _configuration = configuration;
     }
 
     public async Task InvokeAsync(HttpContext context)
     {
+        // Initialize database on first access
+        await EnsureDatabaseInitializedAsync();
+        
         var startTime = DateTime.UtcNow;
         var requestId = Guid.NewGuid().ToString("N")[..8];
         
@@ -226,6 +237,23 @@ public class SecurityMonitoringMiddleware
     {
         // After UseForwardedHeaders() middleware, RemoteIpAddress should contain the real client IP
         // The middleware processes X-Forwarded-For and updates Connection.RemoteIpAddress
+        // manually check X-Forwarded-For header if middleware didn't process it
+        var forwardedFor = httpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+        if (!string.IsNullOrEmpty(forwardedFor))
+        {
+            // X-Forwarded-For can contain multiple IPs: "client, proxy1, proxy2"
+            // Take the first one (closest to the original client)
+            return forwardedFor;
+            /*
+            var firstIp = forwardedFor.Split(',')[0].Trim();
+            if (IPAddress.TryParse(firstIp, out var parsedIp))
+            {
+                return parsedIp.ToString();
+            }
+            */
+        }
+
+        // Fallback to RemoteIpAddress
         var remoteIpAddress = httpContext.Connection.RemoteIpAddress;
         
         if (remoteIpAddress != null)
@@ -238,21 +266,78 @@ public class SecurityMonitoringMiddleware
             return remoteIpAddress.ToString();
         }
         
-        // Fallback: manually check X-Forwarded-For header if middleware didn't process it
-        var forwardedFor = httpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
-        if (!string.IsNullOrEmpty(forwardedFor))
-        {
-            // X-Forwarded-For can contain multiple IPs: "client, proxy1, proxy2"
-            // Take the first one (closest to the original client)
-            var firstIp = forwardedFor.Split(',')[0].Trim();
-            if (IPAddress.TryParse(firstIp, out var parsedIp))
-            {
-                return parsedIp.ToString();
-            }
-        }
         
         // Final fallback
         return "unknown";
+    }
+
+    /// <summary>
+    /// Ensures the security database is initialized by running the CreateSecurityDB.sql script on first access
+    /// </summary>
+    private async Task EnsureDatabaseInitializedAsync()
+    {
+        if (_databaseInitialized)
+            return;
+
+        // Use TaskCompletionSource for async-safe one-time initialization
+        await Task.Run(() =>
+        {
+            lock (_initializationLock)
+            {
+                if (_databaseInitialized)
+                    return;
+
+                try
+                {
+                    _logger.LogInformation("Initializing security database on first access...");
+                    
+                    // Get the connection string for SecurityLogsConnection
+                    var connectionString = _configuration.GetConnectionString("SecurityLogsConnection");
+                    if (string.IsNullOrEmpty(connectionString))
+                    {
+                        _logger.LogError("SecurityLogsConnection string not found in configuration");
+                        return;
+                    }
+
+                    // Read the SQL script
+                    var scriptPath = Path.Combine(AppContext.BaseDirectory, "Scripts", "CreateSecurityDB.sql");
+                    if (!File.Exists(scriptPath))
+                    {
+                        _logger.LogError("CreateSecurityDB.sql script not found at path: {ScriptPath}", scriptPath);
+                        return;
+                    }
+
+                    var sqlScript = File.ReadAllText(scriptPath);
+                    
+                    // Execute the SQL script
+                    using var connection = new SqlConnection(connectionString);
+                    connection.Open();
+                    
+                    // Split the script by GO statements and execute each batch
+                    var batches = sqlScript.Split(new[] { "\nGO\n", "\nGO\r\n", "\r\nGO\r\n", "\r\nGO\n" }, 
+                        StringSplitOptions.RemoveEmptyEntries);
+                    
+                    foreach (var batch in batches)
+                    {
+                        var trimmedBatch = batch.Trim();
+                        if (!string.IsNullOrEmpty(trimmedBatch))
+                        {
+                            using var command = new SqlCommand(trimmedBatch, connection);
+                            command.ExecuteNonQuery();
+                        }
+                    }
+                    
+                    _logger.LogInformation("Security database initialized successfully");
+                    _databaseInitialized = true;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to initialize security database");
+                    // Don't prevent the application from starting if database initialization fails
+                    // The application can still function, but security logging might not work properly
+                }
+            }
+        });
     }
 }
 
