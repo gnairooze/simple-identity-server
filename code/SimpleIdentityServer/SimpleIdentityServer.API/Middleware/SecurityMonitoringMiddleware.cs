@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Caching.Memory;
+using Serilog;
 using System.Collections.Concurrent;
 using System.Net;
 
@@ -135,66 +136,87 @@ public class SecurityMonitoringMiddleware
 
     private void LogSecurityEvent(HttpContext context, string requestId, string eventType, object? additionalData = null)
     {
-        var logData = new
-        {
-            RequestId = requestId,
-            EventType = eventType,
-            Timestamp = DateTime.UtcNow,
-            IpAddress = GetClientIpAddress(context),
-            UserAgent = context.Request.Headers.UserAgent.ToString(),
-            Path = context.Request.Path,
-            Method = context.Request.Method,
-            StatusCode = context.Response.StatusCode,
-            AdditionalData = additionalData
-        };
+        var clientId = ExtractClientIdFromAdditionalData(additionalData);
+        var nodeName = Environment.GetEnvironmentVariable("NODE_NAME") ?? Environment.MachineName;
+        
+        // Use Serilog for structured logging to SQL Server
+        Log.ForContext("RequestId", requestId)
+           .ForContext("EventType", eventType)
+           .ForContext("IpAddress", GetClientIpAddress(context))
+           .ForContext("UserAgent", context.Request.Headers.UserAgent.ToString())
+           .ForContext("Path", context.Request.Path.ToString())
+           .ForContext("Method", context.Request.Method)
+           .ForContext("StatusCode", context.Response.StatusCode)
+           .ForContext("ClientId", clientId)
+           .ForContext("NodeName", nodeName)
+           .Information("Security Event: {EventType} - {AdditionalData}", eventType, additionalData);
 
-        _logger.LogInformation("Security Event: {EventType} | {LogData}", eventType, logData);
+        // Also log to ASP.NET Core logger for console output
+        _logger.LogInformation("Security Event: {EventType} | RequestId: {RequestId} | IP: {IpAddress} | ClientId: {ClientId}", 
+            eventType, requestId, GetClientIpAddress(context), clientId);
     }
 
     private void LogSecurityEvent(HttpContext context, string requestId, string eventType, TimeSpan duration)
     {
-        var logData = new
-        {
-            RequestId = requestId,
-            EventType = eventType,
-            Timestamp = DateTime.UtcNow,
-            IpAddress = GetClientIpAddress(context),
-            UserAgent = context.Request.Headers.UserAgent.ToString(),
-            Path = context.Request.Path,
-            Method = context.Request.Method,
-            StatusCode = context.Response.StatusCode,
-            DurationMs = duration.TotalMilliseconds
-        };
+        var nodeName = Environment.GetEnvironmentVariable("NODE_NAME") ?? Environment.MachineName;
+        var durationMs = duration.TotalMilliseconds;
+        
+        // Use Serilog for structured logging to SQL Server
+        var logEvent = Log.ForContext("RequestId", requestId)
+                         .ForContext("EventType", eventType)
+                         .ForContext("IpAddress", GetClientIpAddress(context))
+                         .ForContext("UserAgent", context.Request.Headers.UserAgent.ToString())
+                         .ForContext("Path", context.Request.Path.ToString())
+                         .ForContext("Method", context.Request.Method)
+                         .ForContext("StatusCode", context.Response.StatusCode)
+                         .ForContext("DurationMs", durationMs)
+                         .ForContext("NodeName", nodeName);
 
-        if (duration.TotalSeconds > 5) // Log slow requests
+        if (duration.TotalSeconds > 5) // Log slow requests as warnings
         {
-            _logger.LogWarning("Slow Security Request: {EventType} | Duration: {Duration}ms | {LogData}", 
-                eventType, duration.TotalMilliseconds, logData);
+            logEvent.Warning("Slow Security Request: {EventType} - Duration: {DurationMs}ms", eventType, durationMs);
+            _logger.LogWarning("Slow Security Request: {EventType} | Duration: {Duration}ms | RequestId: {RequestId}", 
+                eventType, durationMs, requestId);
         }
         else
         {
-            _logger.LogInformation("Security Event: {EventType} | Duration: {Duration}ms | {LogData}", 
-                eventType, duration.TotalMilliseconds, logData);
+            logEvent.Information("Security Event: {EventType} - Duration: {DurationMs}ms", eventType, durationMs);
+            _logger.LogInformation("Security Event: {EventType} | Duration: {Duration}ms | RequestId: {RequestId}", 
+                eventType, durationMs, requestId);
         }
     }
 
     private void LogSecurityException(HttpContext context, string requestId, Exception ex, TimeSpan duration)
     {
-        var logData = new
-        {
-            RequestId = requestId,
-            EventType = "REQUEST_EXCEPTION",
-            Timestamp = DateTime.UtcNow,
-            IpAddress = GetClientIpAddress(context),
-            UserAgent = context.Request.Headers.UserAgent.ToString(),
-            Path = context.Request.Path,
-            Method = context.Request.Method,
-            DurationMs = duration.TotalMilliseconds,
-            ExceptionType = ex.GetType().Name,
-            ExceptionMessage = ex.Message
-        };
+        var nodeName = Environment.GetEnvironmentVariable("NODE_NAME") ?? Environment.MachineName;
+        var durationMs = duration.TotalMilliseconds;
+        
+        // Use Serilog for structured logging to SQL Server
+        Log.ForContext("RequestId", requestId)
+           .ForContext("EventType", "REQUEST_EXCEPTION")
+           .ForContext("IpAddress", GetClientIpAddress(context))
+           .ForContext("UserAgent", context.Request.Headers.UserAgent.ToString())
+           .ForContext("Path", context.Request.Path.ToString())
+           .ForContext("Method", context.Request.Method)
+           .ForContext("DurationMs", durationMs)
+           .ForContext("NodeName", nodeName)
+           .Error(ex, "Security Exception: {ExceptionType} - {ExceptionMessage}", ex.GetType().Name, ex.Message);
 
-        _logger.LogError(ex, "Security Exception: {LogData}", logData);
+        // Also log to ASP.NET Core logger for console output
+        _logger.LogError(ex, "Security Exception: {ExceptionType} | RequestId: {RequestId} | Duration: {Duration}ms", 
+            ex.GetType().Name, requestId, durationMs);
+    }
+
+    /// <summary>
+    /// Helper method to extract ClientId from additional data object
+    /// </summary>
+    private static string? ExtractClientIdFromAdditionalData(object? additionalData)
+    {
+        if (additionalData == null) return null;
+        
+        // Use reflection to get ClientId property if it exists
+        var clientIdProperty = additionalData.GetType().GetProperty("ClientId");
+        return clientIdProperty?.GetValue(additionalData)?.ToString();
     }
 
     /// <summary>

@@ -5,14 +5,22 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using OpenIddict.Abstractions;
 using OpenIddict.EntityFrameworkCore.Models;
+using Serilog;
+using Serilog.Events;
+using Serilog.Sinks.MSSqlServer;
 using SimpleIdentityServer.API.Configuration;
 using SimpleIdentityServer.API.Middleware;
 using SimpleIdentityServer.Data;
 using SimpleIdentityServer.Services;
+using System.Collections.ObjectModel;
+using System.Data;
 using System.Net;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure Serilog for Security Logging
+ConfigureSerilog(builder);
 
 // Add services to the container.
 builder.Services.AddControllers(options =>
@@ -425,4 +433,103 @@ using (var scope = app.Services.CreateScope())
     await scopeService.SeedScopesAsync();
 }
 
-app.Run(); 
+// Start the log cleanup service
+StartLogCleanupService(app);
+
+app.Run();
+
+// Configure Serilog with SQL Server sink and structured logging
+static void ConfigureSerilog(WebApplicationBuilder builder)
+{
+    var connectionString = builder.Configuration.GetConnectionString("SecurityLogsConnection");
+    var nodeName = Environment.GetEnvironmentVariable("NODE_NAME") ?? Environment.MachineName;
+    
+    // Define custom columns for security logs
+    var columnOptions = new ColumnOptions
+    {
+        DisableTriggers = true,
+        ClusteredColumnstoreIndex = false
+    };
+    
+    // Remove default columns we don't need
+    columnOptions.Store.Remove(StandardColumn.Properties);
+    columnOptions.Store.Remove(StandardColumn.MessageTemplate);
+    
+    // Add custom columns for security data
+    columnOptions.AdditionalColumns = new Collection<SqlColumn>
+    {
+        new SqlColumn { ColumnName = "RequestId", DataType = SqlDbType.NVarChar, DataLength = 100, AllowNull = true },
+        new SqlColumn { ColumnName = "EventType", DataType = SqlDbType.NVarChar, DataLength = 50, AllowNull = true },
+        new SqlColumn { ColumnName = "IpAddress", DataType = SqlDbType.NVarChar, DataLength = 45, AllowNull = true },
+        new SqlColumn { ColumnName = "UserAgent", DataType = SqlDbType.NVarChar, DataLength = 500, AllowNull = true },
+        new SqlColumn { ColumnName = "Path", DataType = SqlDbType.NVarChar, DataLength = 200, AllowNull = true },
+        new SqlColumn { ColumnName = "Method", DataType = SqlDbType.NVarChar, DataLength = 10, AllowNull = true },
+        new SqlColumn { ColumnName = "StatusCode", DataType = SqlDbType.Int, AllowNull = true },
+        new SqlColumn { ColumnName = "DurationMs", DataType = SqlDbType.Float, AllowNull = true },
+        new SqlColumn { ColumnName = "ClientId", DataType = SqlDbType.NVarChar, DataLength = 100, AllowNull = true },
+        new SqlColumn { ColumnName = "NodeName", DataType = SqlDbType.NVarChar, DataLength = 50, AllowNull = true }
+    };
+
+    // Configure Serilog
+    Log.Logger = new LoggerConfiguration()
+        .ReadFrom.Configuration(builder.Configuration)
+        .Enrich.WithProperty("NodeName", nodeName)
+        .Enrich.FromLogContext()
+        .WriteTo.Console(
+            outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}")
+        .WriteTo.MSSqlServer(
+            connectionString: connectionString,
+            sinkOptions: new MSSqlServerSinkOptions
+            {
+                TableName = "SecurityLogs",
+                SchemaName = "dbo",
+                AutoCreateSqlTable = true,
+                BatchPostingLimit = builder.Environment.IsProduction() ? 100 : 50,
+                BatchPeriod = TimeSpan.FromSeconds(builder.Environment.IsProduction() ? 5 : 10)
+            },
+            restrictedToMinimumLevel: LogEventLevel.Information,
+            columnOptions: columnOptions)
+        .CreateLogger();
+
+    // Use Serilog for ASP.NET Core logging
+    builder.Host.UseSerilog();
+}
+
+// Start background service to clean up old security logs (30-day retention)
+static void StartLogCleanupService(WebApplication app)
+{
+    var connectionString = app.Configuration.GetConnectionString("SecurityLogsConnection");
+    var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    
+    Task.Run(async () =>
+    {
+        while (!app.Lifetime.ApplicationStopping.IsCancellationRequested)
+        {
+            try
+            {
+                using var connection = new Microsoft.Data.SqlClient.SqlConnection(connectionString);
+                await connection.OpenAsync();
+                
+                // Delete logs older than 30 days
+                var deleteCommand = @"
+                    DELETE FROM SecurityLogs 
+                    WHERE TimeStamp < DATEADD(day, -30, GETUTCDATE())";
+                    
+                using var command = new Microsoft.Data.SqlClient.SqlCommand(deleteCommand, connection);
+                var deletedRows = await command.ExecuteNonQueryAsync();
+                
+                if (deletedRows > 0)
+                {
+                    logger.LogInformation("Security Log Cleanup: Deleted {DeletedRows} old security log records", deletedRows);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error during security log cleanup");
+            }
+            
+            // Run cleanup every 24 hours
+            await Task.Delay(TimeSpan.FromHours(24), app.Lifetime.ApplicationStopping);
+        }
+    });
+} 
