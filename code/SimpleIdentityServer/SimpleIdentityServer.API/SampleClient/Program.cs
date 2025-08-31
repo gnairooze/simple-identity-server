@@ -25,7 +25,7 @@ class Program
                 return;
             }
 
-            Console.WriteLine($"Access Token: {token}");
+            Console.WriteLine("Access Token: [MASKED FOR SECURITY]");
             Console.WriteLine();
 
             // Step 2: Use the token to access protected resources
@@ -60,7 +60,7 @@ class Program
         if (response.IsSuccessStatusCode)
         {
             var content = await response.Content.ReadAsStringAsync();
-            Console.WriteLine($"Token Response: {content}");
+            Console.WriteLine("Token Response: [SUCCESS - Token details masked for security]");
             
             // Parse the JSON response to extract the access_token
             // In a real application, you'd use a JSON library like Newtonsoft.Json

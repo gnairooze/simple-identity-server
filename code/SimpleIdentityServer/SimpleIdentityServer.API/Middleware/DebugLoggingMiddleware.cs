@@ -180,7 +180,15 @@ public class DebugLoggingMiddleware
             "x-api-key",
             "x-auth-token",
             "authentication",
-            "proxy-authorization"
+            "proxy-authorization",
+            "bearer",
+            "x-access-token",
+            "x-refresh-token",
+            "x-jwt-token",
+            "x-oauth-token",
+            "x-session-token",
+            "x-csrf-token",
+            "x-xsrf-token"
         };
         
         return sensitiveHeaders.Contains(headerName.ToLowerInvariant());
@@ -207,7 +215,7 @@ public class DebugLoggingMiddleware
             // Reset the stream position for the next middleware
             request.Body.Seek(0, SeekOrigin.Begin);
             
-            return string.IsNullOrEmpty(body) ? "[EMPTY]" : body;
+            return string.IsNullOrEmpty(body) ? "[EMPTY]" : MaskSensitiveData(body);
         }
         catch (Exception ex)
         {
@@ -233,7 +241,7 @@ public class DebugLoggingMiddleware
             using var reader = new StreamReader(responseBodyStream, Encoding.UTF8, leaveOpen: true);
             var body = await reader.ReadToEndAsync();
             
-            return string.IsNullOrEmpty(body) ? "[EMPTY]" : body;
+            return string.IsNullOrEmpty(body) ? "[EMPTY]" : MaskSensitiveData(body);
         }
         catch (Exception ex)
         {
@@ -311,5 +319,173 @@ public class DebugLoggingMiddleware
         }
 
         return "[BODY_NOT_LOGGED]";
+    }
+
+    /// <summary>
+    /// Masks sensitive data in request/response bodies to prevent logging of tokens and passwords
+    /// </summary>
+    /// <param name="content">The content to sanitize</param>
+    /// <returns>Content with sensitive data masked</returns>
+    private static string MaskSensitiveData(string content)
+    {
+        if (string.IsNullOrEmpty(content))
+        {
+            return content;
+        }
+
+        try
+        {
+            // Try to parse as JSON and mask sensitive fields
+            if (IsJsonContent(content))
+            {
+                return MaskJsonSensitiveData(content);
+            }
+            
+            // For non-JSON content, use regex patterns to mask common sensitive patterns
+            return MaskTextSensitiveData(content);
+        }
+        catch
+        {
+            // If any error occurs during masking, fall back to text-based masking
+            return MaskTextSensitiveData(content);
+        }
+    }
+
+    private static bool IsJsonContent(string content)
+    {
+        var trimmed = content.Trim();
+        return (trimmed.StartsWith("{") && trimmed.EndsWith("}")) ||
+               (trimmed.StartsWith("[") && trimmed.EndsWith("]"));
+    }
+
+    private static string MaskJsonSensitiveData(string jsonContent)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(jsonContent);
+            var maskedJson = MaskJsonElement(document.RootElement);
+            return JsonSerializer.Serialize(maskedJson, new JsonSerializerOptions 
+            { 
+                WriteIndented = true,
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            });
+        }
+        catch
+        {
+            // If JSON parsing fails, fall back to text-based masking
+            return MaskTextSensitiveData(jsonContent);
+        }
+    }
+
+    private static object? MaskJsonElement(JsonElement element)
+    {
+        switch (element.ValueKind)
+        {
+            case JsonValueKind.Object:
+                var obj = new Dictionary<string, object?>();
+                foreach (var property in element.EnumerateObject())
+                {
+                    var key = property.Name.ToLowerInvariant();
+                    if (IsSensitiveJsonProperty(key))
+                    {
+                        obj[property.Name] = "[MASKED]";
+                    }
+                    else
+                    {
+                        obj[property.Name] = MaskJsonElement(property.Value);
+                    }
+                }
+                return obj;
+
+            case JsonValueKind.Array:
+                var array = new List<object?>();
+                foreach (var item in element.EnumerateArray())
+                {
+                    array.Add(MaskJsonElement(item));
+                }
+                return array;
+
+            case JsonValueKind.String:
+                return element.GetString();
+            case JsonValueKind.Number:
+                return element.GetDecimal();
+            case JsonValueKind.True:
+                return true;
+            case JsonValueKind.False:
+                return false;
+            case JsonValueKind.Null:
+                return null;
+            default:
+                return element.ToString();
+        }
+    }
+
+    private static bool IsSensitiveJsonProperty(string propertyName)
+    {
+        var sensitiveProperties = new[]
+        {
+            "password",
+            "pwd",
+            "secret",
+            "token",
+            "access_token",
+            "refresh_token",
+            "id_token",
+            "jwt",
+            "bearer",
+            "authorization",
+            "auth",
+            "api_key",
+            "apikey",
+            "client_secret",
+            "clientsecret",
+            "private_key",
+            "privatekey",
+            "session_token",
+            "sessiontoken",
+            "csrf_token",
+            "csrftoken",
+            "xsrf_token",
+            "xsrftoken",
+            "oauth_token",
+            "oauthtoken",
+            "key",
+            "passphrase",
+            "credentials",
+            "credential"
+        };
+
+        return sensitiveProperties.Any(sensitive => 
+            propertyName.Contains(sensitive, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static string MaskTextSensitiveData(string content)
+    {
+        // Mask common patterns for tokens and passwords in text content
+        var patterns = new[]
+        {
+            // Bearer tokens
+            (@"Bearer\s+[A-Za-z0-9\-._~+/]+=*", "Bearer [MASKED]"),
+            // JWT tokens (basic pattern)
+            (@"eyJ[A-Za-z0-9\-._~+/]*\.eyJ[A-Za-z0-9\-._~+/]*\.[A-Za-z0-9\-._~+/]*", "[MASKED_JWT]"),
+            // API keys (basic pattern - sequences of 20+ alphanumeric characters)
+            (@"\b[A-Za-z0-9]{20,}\b", "[MASKED_KEY]"),
+            // Password patterns in form data
+            (@"password=[^&\s]*", "password=[MASKED]"),
+            (@"pwd=[^&\s]*", "pwd=[MASKED]"),
+            // Client secret patterns
+            (@"client_secret=[^&\s]*", "client_secret=[MASKED]"),
+            (@"clientSecret[""']?\s*[:=]\s*[""'][^""']*[""']", "clientSecret: \"[MASKED]\"")
+        };
+
+        var maskedContent = content;
+        foreach (var (pattern, replacement) in patterns)
+        {
+            maskedContent = System.Text.RegularExpressions.Regex.Replace(
+                maskedContent, pattern, replacement, 
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        }
+
+        return maskedContent;
     }
 }

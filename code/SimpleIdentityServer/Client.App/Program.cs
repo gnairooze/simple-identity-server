@@ -38,7 +38,7 @@ class Program
                 return;
             }
 
-            Console.WriteLine($"Access Token obtained: {token[..50]}...");
+            Console.WriteLine("Access Token obtained: [MASKED FOR SECURITY]");
             Console.WriteLine();
 
             // Step 2: Use token to access protected WeatherForecast endpoint
@@ -72,7 +72,7 @@ class Program
             if (response.IsSuccessStatusCode)
             {
                 var content = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"Token Response: {content}");
+                Console.WriteLine("Token Response: [SUCCESS - Token details masked for security]");
                 
                 // Parse the JSON response to extract the access_token
                 var tokenResponse = JsonSerializer.Deserialize<JsonElement>(content);
