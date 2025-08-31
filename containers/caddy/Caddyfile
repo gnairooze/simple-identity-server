@@ -1,0 +1,129 @@
+# Caddy configuration for Simple Identity Server Load Balancer
+{
+    # Global options
+    admin off
+    auto_https off  # We'll handle SSL manually with provided certificates
+    
+    # Note: Rate limiting requires a plugin like caddy-ratelimit
+    # For now, rate limiting is handled at the application level
+}
+
+# HTTP to HTTPS redirect
+identity.dev.test:80 {
+    # Health check endpoint
+    handle /health {
+        header Content-Type text/plain
+        respond "healthy" 200
+    }
+    
+    # Redirect all other HTTP traffic to HTTPS
+    redir https://{host}{uri} permanent
+}
+
+# HTTPS server with load balancing
+identity.dev.test:443 {
+    # TLS configuration with provided certificates
+    tls /etc/caddy/ssl/identity-dev-test.crt /etc/caddy/ssl/identity-dev-test.key
+    
+    # Security headers
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Frame-Options DENY
+        X-Content-Type-Options nosniff
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+    
+    # Health check endpoint for load balancer
+    handle /health {
+        header Content-Type text/plain
+        respond "healthy" 200
+    }
+    
+    # Token endpoint - load balance to API instances
+    handle /connect/token {
+        # Note: Rate limiting would require a plugin like caddy-ratelimit
+        # For now, rate limiting is handled at the application level
+        
+        # Load balance to API instances with least connections
+        reverse_proxy {
+            # API instances - using HTTPS
+            to https://172.25.0.11:443 https://172.25.0.12:443 https://172.25.0.13:443
+            
+            # Load balancing policy
+            lb_policy least_conn
+            
+            # Health checks
+            health_uri /home/health
+            health_interval 30s
+            health_timeout 10s
+            
+            # SSL settings for upstream
+            transport http {
+                tls_insecure_skip_verify
+            }
+            
+            # Proxy headers
+            header_up Host {host}
+            header_up X-Real-IP {remote}
+            header_up X-Forwarded-For {remote}
+            header_up X-Forwarded-Proto {scheme}
+            
+            # Connection settings
+            fail_duration 30s
+            max_fails 3
+            unhealthy_status 5xx
+        }
+        
+        # Add response header to identify serving node
+        header X-Served-By "caddy-lb"
+    }
+    
+    # All other endpoints
+    handle {
+        # Note: Rate limiting would require a plugin like caddy-ratelimit
+        # For now, rate limiting is handled at the application level
+        
+        # Load balance to API instances with least connections
+        reverse_proxy {
+            # API instances - using HTTPS
+            to https://172.25.0.11:443 https://172.25.0.12:443 https://172.25.0.13:443
+            
+            # Load balancing policy
+            lb_policy least_conn
+            
+            # Health checks
+            health_uri /home/health
+            health_interval 30s
+            health_timeout 10s
+            
+            # SSL settings for upstream
+            transport http {
+                tls_insecure_skip_verify
+            }
+            
+            # Proxy headers
+            header_up Host {host}
+            header_up X-Real-IP {remote}
+            header_up X-Forwarded-For {remote}
+            header_up X-Forwarded-Proto {scheme}
+            
+            # Connection settings
+            fail_duration 30s
+            max_fails 3
+            unhealthy_status 5xx
+        }
+        
+        # Add response header to identify serving node
+        header X-Served-By "caddy-lb"
+    }
+    
+    # Enable gzip compression
+    encode gzip
+    
+    # Logging
+    log {
+        output file /var/log/caddy/access.log
+        format json
+    }
+}

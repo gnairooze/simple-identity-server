@@ -1,17 +1,19 @@
 name: simple-identity-env
 
 services:
-  # Load Balancer - NGINX
-  nginx-lb:
-    image: nginx:alpine
+  # Load Balancer - Caddy
+  simple-identity-lb:
+    image: caddy:2-alpine
     container_name: simple-identity-server-lb
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/proxy_params.conf:/etc/nginx/proxy_params.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./nginx/ssl:/etc/caddy/ssl:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      - caddy_logs:/var/log/caddy
     depends_on:
       - api-instance-1
       - api-instance-2
@@ -162,7 +164,7 @@ services:
         echo '=== Health Check ===' 
         echo \"Timestamp: \$(date)\"
         echo 'Load Balancer Health:'
-        curl -f --cacert /usr/local/share/ca-certificates/nginx-ca.crt https://identity.dev.test/health || echo 'LB Health Check Failed'
+        curl -f --cacert /usr/local/share/ca-certificates/nginx-ca.crt https://identity.dev.test/health || echo 'Caddy LB Health Check Failed'
         echo ''
         echo 'API Instance 1:'
         curl -f -k https://172.25.0.11:443/home/health || echo 'API 1 Health Check Failed'
@@ -177,7 +179,7 @@ services:
         sleep 60
       done"
     depends_on:
-      - nginx-lb
+      - simple-identity-lb
       - api-instance-1
       - api-instance-2
       - api-instance-3
@@ -198,4 +200,10 @@ volumes:
   sqlserver_data:
     driver: local
   shared_certs:
+    driver: local
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local
+  caddy_logs:
     driver: local
