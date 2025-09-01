@@ -124,7 +124,7 @@ services:
       - ACCEPT_EULA=Y
       - SA_PASSWORD=StrongPassword123!
       - MSSQL_PID=Express
-      - MSSQL_MEMORY_LIMIT_MB=2048
+      - MSSQL_MEMORY_LIMIT_MB=4096
     ports:
       - "1433:1433"
     volumes:
@@ -136,7 +136,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 2G
+          cpus: '2.0'
+          memory: 4G
         reservations:
           memory: 1G
     healthcheck:
