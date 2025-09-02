@@ -431,6 +431,10 @@ app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Add response filtering middleware for field-level authorization
+app.UseMiddleware<ResponseFilteringMiddleware>();
+
 app.MapControllers();
 
 // Seed the database with initial data

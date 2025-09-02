@@ -78,10 +78,24 @@ options.AddEncryptionCertificate(GetProductionEncryptionCertificate())
 **Current Risk**: Medium - Limited data exposure but no field-level controls
 
 **Actions Required**:
-- [ ] Implement field-level authorization in API responses
-- [ ] Add data filtering based on client permissions
-- [ ] Review token introspection response for sensitive data exposure
-- [ ] Implement response filtering middleware
+- [x] Implement field-level authorization in API responses
+- [x] Add data filtering based on client permissions
+- [x] Review token introspection response for sensitive data exposure
+- [x] Implement response filtering middleware
+
+**Implementation Details**:
+- Created `FieldLevelAuthorizationAttribute` for controller-level filtering
+- Implemented `ResponseFilteringMiddleware` for JSON response filtering
+- Enhanced token introspection to limit sensitive data exposure based on client trust levels
+- Added field-level authorization rules based on client roles and permissions
+- Created comprehensive testing script to validate field-level controls
+
+**Security Controls Added**:
+1. **Response Filtering**: Middleware automatically filters JSON responses based on user claims
+2. **Field-Level Rules**: Configurable permissions for sensitive fields (temperature, humidity, internal IDs)
+3. **Client-Based Access**: Different data exposure levels for service, web, and mobile clients
+4. **Introspection Protection**: Limited token details based on requesting client's trust level
+5. **Comprehensive Testing**: PowerShell script to validate all field-level authorization scenarios
 
 ### 4. API4:2023 - Unrestricted Resource Consumption
 

@@ -203,12 +203,17 @@ public class TokenController : ControllerBase
             return Ok(new { active = false });
         }
 
-        // Build the minimal introspection response
+        // Build the minimal introspection response with field-level filtering
         var response = new Dictionary<string, object>
         {
             ["active"] = true
         };
 
+        // Only include timing information for authorized clients
+        var introspectingClientId = request.ClientId;
+        var tokenSubject = await _tokenManager.GetSubjectAsync(tokenEntity);
+        
+        // Basic timing information (always included)
         if (expirationDate.HasValue)
         {
             response["exp"] = expirationDate.Value.ToUnixTimeSeconds();
@@ -220,6 +225,45 @@ public class TokenController : ControllerBase
             response["iat"] = creationDate.Value.ToUnixTimeSeconds();
         }
 
+        // Only include detailed token information for authorized scenarios
+        if (ShouldIncludeDetailedTokenInfo(introspectingClientId, tokenSubject))
+        {
+            // Include additional claims only for authorized introspection requests
+            var tokenType = await _tokenManager.GetTypeAsync(tokenEntity);
+            if (!string.IsNullOrEmpty(tokenType))
+            {
+                response["token_type"] = tokenType;
+            }
+
+            if (!string.IsNullOrEmpty(tokenSubject))
+            {
+                response["sub"] = tokenSubject;
+            }
+
+            // Include scopes if the introspecting client is authorized
+            // Note: For security reasons, we only include scope information for highly trusted clients
+            // This prevents scope enumeration attacks through introspection
+            if (introspectingClientId == "admin-client" || introspectingClientId == "monitoring-service")
+            {
+                // For now, we don't expose scopes in introspection to maintain security
+                // Scopes can be verified through the token validation process instead
+                response["scope_access"] = "authorized";
+            }
+        }
+
         return Ok(response);
+    }
+
+    private static bool ShouldIncludeDetailedTokenInfo(string? introspectingClientId, string? tokenSubject)
+    {
+        // Only include detailed information if:
+        // 1. The introspecting client is the same as the token subject (self-introspection)
+        // 2. The introspecting client has admin privileges
+        // 3. The introspecting client is a trusted service
+        
+        var trustedClients = new[] { "service-api", "admin-client", "monitoring-service" };
+        
+        return introspectingClientId == tokenSubject ||
+               (introspectingClientId != null && trustedClients.Contains(introspectingClientId));
     }
 } 

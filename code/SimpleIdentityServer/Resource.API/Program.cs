@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using OpenIddict.Validation.AspNetCore;
 using OpenIddict.Validation.ServerIntegration;
 using OpenIddict.Validation.SystemNetHttp;
+using Resource.API.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -74,6 +75,9 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Add response filtering middleware for field-level authorization
+app.UseMiddleware<ResponseFilteringMiddleware>();
 
 app.MapControllers();
 
