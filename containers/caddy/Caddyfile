@@ -69,14 +69,14 @@ identity.dev.test:443 {
             header_up X-Forwarded-For {remote}
             header_up X-Forwarded-Proto {scheme}
             
+            # Response header to identify which upstream server handled the request
+            header_down X-Served-By {http.reverse_proxy.upstream.hostport}
+            
             # Connection settings
             fail_duration 30s
             max_fails 3
             unhealthy_status 5xx
         }
-        
-        # Add response header to identify serving node
-        header X-Served-By "caddy-lb"
     }
     
     # All other endpoints
@@ -108,14 +108,14 @@ identity.dev.test:443 {
             header_up X-Forwarded-For {remote}
             header_up X-Forwarded-Proto {scheme}
             
+            # Response header to identify which upstream server handled the request
+            header_down X-Served-By {http.reverse_proxy.upstream.hostport}
+            
             # Connection settings
             fail_duration 30s
             max_fails 3
             unhealthy_status 5xx
         }
-        
-        # Add response header to identify serving node
-        header X-Served-By "caddy-lb"
     }
     
     # Enable gzip compression
