@@ -19,6 +19,12 @@ using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure secure connection strings from environment variables
+ConfigureSecureConnectionStrings(builder);
+
+// Validate all configuration early in the startup process
+ValidateConfiguration(builder);
+
 // Configure Serilog for Security Logging
 ConfigureSerilog(builder);
 
@@ -31,6 +37,9 @@ if (builder.Environment.IsDevelopment())
     builder.Logging.SetMinimumLevel(LogLevel.Debug);
     builder.Logging.AddFilter("SimpleIdentityServer.API.Middleware.DebugLoggingMiddleware", LogLevel.Debug);
 }
+
+// Configure CORS policies
+ConfigureCors(builder);
 
 // Add services to the container.
 builder.Services.AddControllers(options =>
@@ -45,17 +54,15 @@ builder.Services.Configure<IISServerOptions>(options =>
     options.MaxRequestBodySize = 1_048_576; // 1MB
 });
 
-builder.Services.Configure<KestrelServerOptions>(options =>
-{
-    options.Limits.MaxRequestBodySize = 1_048_576; // 1MB
-    options.Limits.MaxConcurrentConnections = 100;
-    options.Limits.MaxConcurrentUpgradedConnections = 100;
-    options.Limits.RequestHeadersTimeout = TimeSpan.FromSeconds(30);
-    options.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(2);
-});
+// Configure Kestrel server options from configuration
+ConfigureKestrel(builder);
 
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// Only enable Swagger in development
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddEndpointsApiExplorer();
+    builder.Services.AddSwaggerGen();
+}
 
 // Add memory cache for security monitoring
 builder.Services.AddMemoryCache();
@@ -255,89 +262,30 @@ static string? GetClientIdFromRequest(HttpContext httpContext)
     return null;
 }
 
-// Configure Entity Framework Core with timeout settings
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-{
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"), sqlOptions =>
-    {
-        // Set command timeout to 30 seconds to prevent long-running queries
-        sqlOptions.CommandTimeout(30);
-        // Enable connection resiliency
-        sqlOptions.EnableRetryOnFailure(maxRetryCount: 3, maxRetryDelay: TimeSpan.FromSeconds(5), errorNumbersToAdd: null);
-    });
-    
-    // Configure OpenIddict to use Entity Framework Core as the default store
-    options.UseOpenIddict();
-});
+// Configure Entity Framework Core with settings from configuration
+ConfigureDatabase(builder);
 
-// Configure OpenIddict
-builder.Services.AddOpenIddict()
-    .AddCore(options =>
-    {
-        options.UseEntityFrameworkCore()
-               .UseDbContext<ApplicationDbContext>();
-    })
-    .AddServer(options =>
-    {
-        options
-            .SetTokenEndpointUris("/connect/token")
-            .SetIntrospectionEndpointUris("/connect/introspect")
-            .SetConfigurationEndpointUris("/.well-known/openid-configuration");
-
-        // Enable the client credentials flow
-        options.AllowClientCredentialsFlow();
-
-        // Register the signing and encryption credentials
-        // Use shared keys stored in the database for load balancer scenarios
-        if (builder.Environment.IsProduction())
-        {
-            // In production, use certificates from database or shared location
-            // This ensures all instances use the same signing keys
-            options.AddEncryptionCertificate(GetOrCreateEncryptionCertificate())
-                   .AddSigningCertificate(GetOrCreateSigningCertificate());
-        }
-        else
-        {
-            // In development, use development certificates (single instance)
-            options.AddDevelopmentEncryptionCertificate()
-                   .AddDevelopmentSigningCertificate();
-        }
-
-        // Register the ASP.NET Core host and configure the ASP.NET Core options
-        options.UseAspNetCore()
-               .EnableTokenEndpointPassthrough();
-
-        // Configure the JWT handler
-        options.UseAspNetCore()
-               .DisableTransportSecurityRequirement();
-
-        // Configure the OpenIddict server to issue JWT tokens
-        // Remove ephemeral keys - they cause issues in load balanced scenarios
-        options.DisableAccessTokenEncryption()
-               .SetAccessTokenLifetime(TimeSpan.FromHours(1))
-               .SetRefreshTokenLifetime(TimeSpan.FromDays(14));
-    })
-    .AddValidation(options =>
-    {
-        options.UseLocalServer();
-        options.UseAspNetCore();
-    });
+// Configure OpenIddict with settings from configuration
+ConfigureOpenIddict(builder);
 
 // Register custom services
 builder.Services.AddScoped<IClientService, ClientService>();
 builder.Services.AddScoped<IScopeService, ScopeService>();
 
 // Helper methods for certificate management in load balanced scenarios
-static System.Security.Cryptography.X509Certificates.X509Certificate2 GetOrCreateEncryptionCertificate()
+static System.Security.Cryptography.X509Certificates.X509Certificate2 GetOrCreateEncryptionCertificate(SimpleIdentityServer.API.Configuration.CertificateOptions certificateOptions)
 {
-    // For production, you should load certificates from:
-    // 1. Azure Key Vault
-    // 2. Shared file system mounted to all containers
-    // 3. Environment variables
-    // 4. Database (for this example, we'll use a simple approach)
+    var certPath = certificateOptions.EncryptionCertificatePath;
+    var certPassword = certificateOptions.Password;
     
-    var certPath = "/app/certs/encryption.pfx";
-    var certPassword = Environment.GetEnvironmentVariable("CERT_PASSWORD") ?? "DefaultPassword123!";
+    if (string.IsNullOrEmpty(certPassword))
+    {
+        certPassword = Environment.GetEnvironmentVariable("CERT_PASSWORD");
+        if (string.IsNullOrEmpty(certPassword))
+        {
+            throw new InvalidOperationException("Certificate password is required. Set CERT_PASSWORD environment variable or Application:Certificates:Password in configuration.");
+        }
+    }
     
     if (File.Exists(certPath))
     {
@@ -357,10 +305,19 @@ static System.Security.Cryptography.X509Certificates.X509Certificate2 GetOrCreat
     return cert;
 }
 
-static System.Security.Cryptography.X509Certificates.X509Certificate2 GetOrCreateSigningCertificate()
+static System.Security.Cryptography.X509Certificates.X509Certificate2 GetOrCreateSigningCertificate(SimpleIdentityServer.API.Configuration.CertificateOptions certificateOptions)
 {
-    var certPath = "/app/certs/signing.pfx";
-    var certPassword = Environment.GetEnvironmentVariable("CERT_PASSWORD") ?? "DefaultPassword123!";
+    var certPath = certificateOptions.SigningCertificatePath;
+    var certPassword = certificateOptions.Password;
+    
+    if (string.IsNullOrEmpty(certPassword))
+    {
+        certPassword = Environment.GetEnvironmentVariable("CERT_PASSWORD");
+        if (string.IsNullOrEmpty(certPassword))
+        {
+            throw new InvalidOperationException("Certificate password is required. Set CERT_PASSWORD environment variable or Application:Certificates:Password in configuration.");
+        }
+    }
     
     if (File.Exists(certPath))
     {
@@ -418,7 +375,13 @@ if (loadBalancerConfig.EnableForwardedHeaders)
     app.UseForwardedHeaders();
 }
 
+// Add security headers middleware - should be early in pipeline
+app.UseMiddleware<SecurityHeadersMiddleware>();
+
 app.UseHttpsRedirection();
+
+// Add CORS middleware - must be after UseHttpsRedirection
+app.UseCors("ProductionCorsPolicy");
 
 // Add debug logging middleware - should be very early in pipeline to capture all requests/responses
 app.UseMiddleware<DebugLoggingMiddleware>();
@@ -455,10 +418,70 @@ StartLogCleanupService(app);
 
 app.Run();
 
+// Configure secure connection strings from environment variables
+static void ConfigureSecureConnectionStrings(WebApplicationBuilder builder)
+{
+    // Get connection strings from environment variables
+    var defaultConnection = Environment.GetEnvironmentVariable("DEFAULT_CONNECTION_STRING");
+    var securityLogsConnection = Environment.GetEnvironmentVariable("SECURITY_LOGS_CONNECTION_STRING");
+    
+    if (!string.IsNullOrEmpty(defaultConnection))
+    {
+        builder.Configuration["ConnectionStrings:DefaultConnection"] = defaultConnection;
+    }
+    else if (builder.Environment.IsDevelopment())
+    {
+        // Fallback for development - use local development database
+        builder.Configuration["ConnectionStrings:DefaultConnection"] = 
+            "Server=localhost;Database=SimpleIdentityServer_Dev;Integrated Security=true;TrustServerCertificate=true;MultipleActiveResultSets=true";
+    }
+    else
+    {
+        throw new InvalidOperationException("DEFAULT_CONNECTION_STRING environment variable is required in production");
+    }
+    
+    if (!string.IsNullOrEmpty(securityLogsConnection))
+    {
+        builder.Configuration["ConnectionStrings:SecurityLogsConnection"] = securityLogsConnection;
+    }
+    else if (builder.Environment.IsDevelopment())
+    {
+        // Fallback for development - use local development database
+        builder.Configuration["ConnectionStrings:SecurityLogsConnection"] = 
+            "Server=localhost;Database=SimpleIdentityServer_SecurityLogs_Dev;Integrated Security=true;TrustServerCertificate=true;MultipleActiveResultSets=true";
+    }
+    else
+    {
+        throw new InvalidOperationException("SECURITY_LOGS_CONNECTION_STRING environment variable is required in production");
+    }
+}
+
 // Configure Serilog with SQL Server sink and structured logging
 static void ConfigureSerilog(WebApplicationBuilder builder)
 {
+    // Get connection string from environment variables or configuration
     var connectionString = builder.Configuration.GetConnectionString("SecurityLogsConnection");
+    
+    // If connection string is empty, it means we need to use environment variables
+    if (string.IsNullOrEmpty(connectionString))
+    {
+        var securityLogsConnection = Environment.GetEnvironmentVariable("SECURITY_LOGS_CONNECTION_STRING");
+        if (!string.IsNullOrEmpty(securityLogsConnection))
+        {
+            connectionString = securityLogsConnection;
+        }
+        else if (builder.Environment.IsDevelopment())
+        {
+            // Fallback for development
+            connectionString = "Server=localhost;Database=SimpleIdentityServer_SecurityLogs_Dev;Integrated Security=true;TrustServerCertificate=true;MultipleActiveResultSets=true";
+        }
+        else
+        {
+            // In production, we'll configure console-only logging if no connection string is available
+            connectionString = null;
+        }
+    }
+    
     var nodeName = Environment.GetEnvironmentVariable("NODE_NAME") ?? Environment.MachineName;
     
     // Define custom columns for security logs
@@ -468,9 +491,11 @@ static void ConfigureSerilog(WebApplicationBuilder builder)
         ClusteredColumnstoreIndex = false
     };
     
-    // Remove default columns we don't need
+    // Keep essential columns but remove Properties and MessageTemplate
     columnOptions.Store.Remove(StandardColumn.Properties);
-    columnOptions.Store.Remove(StandardColumn.MessageTemplate);
+        
+    // Ensure LogEvent column is included (this contains the actual log message)
+    columnOptions.Store.Add(StandardColumn.LogEvent);
     
     // Add custom columns for security data
     columnOptions.AdditionalColumns = new Collection<SqlColumn>
@@ -488,27 +513,37 @@ static void ConfigureSerilog(WebApplicationBuilder builder)
     };
 
     // Configure Serilog
-    Log.Logger = new LoggerConfiguration()
-        .ReadFrom.Configuration(builder.Configuration)
+    var loggerConfig = new LoggerConfiguration()
         .Enrich.WithProperty("NodeName", nodeName)
         .Enrich.FromLogContext()
         .MinimumLevel.Debug() // Enable debug level logging
         .WriteTo.Console(
             restrictedToMinimumLevel: builder.Environment.IsDevelopment() ? LogEventLevel.Debug : LogEventLevel.Information,
-            outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}")
-        .WriteTo.MSSqlServer(
+            outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}");
+
+    // Only add SQL Server sink if we have a valid connection string
+    if (!string.IsNullOrEmpty(connectionString))
+    {
+        loggerConfig.WriteTo.MSSqlServer(
             connectionString: connectionString,
             sinkOptions: new MSSqlServerSinkOptions
             {
                 TableName = "SecurityLogs",
                 SchemaName = "dbo",
                 AutoCreateSqlTable = true,
-                BatchPostingLimit = builder.Environment.IsProduction() ? 100 : 50,
-                BatchPeriod = TimeSpan.FromSeconds(builder.Environment.IsProduction() ? 5 : 10)
+                BatchPostingLimit = GetSecurityLoggingBatchLimit(builder),
+                BatchPeriod = TimeSpan.FromSeconds(GetSecurityLoggingBatchPeriod(builder))
             },
-            restrictedToMinimumLevel: LogEventLevel.Information,
-            columnOptions: columnOptions)
-        .CreateLogger();
+        tion,
+            columnOptions: columnOptions);
+    }
+    else
+    {
+        // Log warning that SQL Server logging is not available
+        Console.WriteLine("WARNING: No SQL Server connection string available for security logging. Using console logging only.");
+    }
+
+    Log.Logger = loggerConfig.CreateLogger();
 
     // Use Serilog for ASP.NET Core logging
     builder.Host.UseSerilog();
@@ -517,8 +552,23 @@ static void ConfigureSerilog(WebApplicationBuilder builder)
 // Start background service to clean up old security logs (30-day retention)
 static void StartLogCleanupService(WebApplication app)
 {
+    // Get connection string from environment variables or configuration
     var connectionString = app.Configuration.GetConnectionString("SecurityLogsConnection");
+    
+    // If connection string is empty, try environment variables
+    if (string.IsNullOrEmpty(connectionString))
+    {
+        connectionString = Environment.GetEnvironmentVariable("SECURITY_LOGS_CONNECTION_STRING");
+    }
+    
     var logger = app.Services.GetRequiredService<ILogger<Program>>();
+    
+    // Only start cleanup service if we have a valid connection string
+    if (string.IsNullOrEmpty(connectionString))
+    {
+        logger.LogWarning("No SQL Server connection string available for security logs cleanup service. Cleanup service will not start.");
+        return;
+    }
     
     Task.Run(async () =>
     {
@@ -529,10 +579,11 @@ static void StartLogCleanupService(WebApplication app)
                 using var connection = new Microsoft.Data.SqlClient.SqlConnection(connectionString);
                 await connection.OpenAsync();
                 
-                // Delete logs older than 30 days
-                var deleteCommand = @"
+                // Delete logs older than configured retention period
+                var retentionDays = GetSecurityLoggingRetentionDays(builder);
+                var deleteCommand = $@"
                     DELETE FROM SecurityLogs 
-                    WHERE TimeStamp < DATEADD(day, -30, GETUTCDATE())";
+                    WHERE TimeStamp < DATEADD(day, -{retentionDays}, GETUTCDATE())";
                     
                 using var command = new Microsoft.Data.SqlClient.SqlCommand(deleteCommand, connection);
                 var deletedRows = await command.ExecuteNonQueryAsync();
@@ -548,7 +599,194 @@ static void StartLogCleanupService(WebApplication app)
             }
             
             // Run cleanup every 24 hours
-            await Task.Delay(TimeSpan.FromHours(24), app.Lifetime.ApplicationStopping);
+            var cleanupInterval = builder.Configuration.GetValue<int>("Application:SecurityLogging:CleanupIntervalHours", 24);
+            await Task.Delay(TimeSpan.FromHours(cleanupInterval), app.Lifetime.ApplicationStopping);
         }
     });
+}
+
+// Validate all configuration
+static void ValidateConfiguration(WebApplicationBuilder builder)
+{
+    var validationService = new SimpleIdentityServer.Services.ConfigurationValidationService(
+        builder.Configuration, 
+        builder.Environment);
+    
+    try
+    {
+        validationService.ValidateConfiguration();
+    }
+    catch (InvalidOperationException ex)
+    {
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.WriteLine(ex.Message);
+        Console.ResetColor();
+        Environment.Exit(1);
+    }
+}
+
+// Configure CORS policies
+static void ConfigureCors(WebApplicationBuilder builder)
+{
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("ProductionCorsPolicy", policy =>
+        {
+            if (builder.Environment.IsProduction())
+            {
+                // In production, only allow specific origins from environment variables
+                var allowedOrigins = Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS")?.Split(';') ?? Array.Empty<string>();
+                if (allowedOrigins.Length > 0 && !string.IsNullOrWhiteSpace(allowedOrigins[0]))
+                {
+                    policy.WithOrigins(allowedOrigins);
+                }
+                else
+                {
+                    throw new InvalidOperationException("CORS_ALLOWED_ORIGINS environment variable is required in production");
+                }
+            }
+            else
+            {
+                // In development, use origins from configuration
+                var developmentOptions = builder.Configuration.GetSection("Application:Development").Get<SimpleIdentityServer.API.Configuration.DevelopmentOptions>();
+                if (developmentOptions?.CorsOrigins?.Length > 0)
+                {
+                    policy.WithOrigins(developmentOptions.CorsOrigins);
+                }
+                else
+                {
+                    throw new InvalidOperationException("Application:Development:CorsOrigins configuration is required in development");
+                }
+            }
+            
+            policy.WithMethods("GET", "POST", "OPTIONS")
+                  .WithHeaders("Content-Type", "Authorization", "X-Requested-With")
+                  .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
+        });
+    });
+}
+
+// Configure Kestrel server options
+static void ConfigureKestrel(WebApplicationBuilder builder)
+{
+    var kestrelOptions = builder.Configuration.GetSection("Kestrel").Get<SimpleIdentityServer.API.Configuration.KestrelOptions>();
+    if (kestrelOptions == null)
+    {
+        throw new InvalidOperationException("Kestrel configuration section is required");
+    }
+
+    builder.Services.Configure<KestrelServerOptions>(options =>
+    {
+        options.Limits.MaxRequestBodySize = kestrelOptions.MaxRequestBodySize;
+        options.Limits.MaxConcurrentConnections = kestrelOptions.MaxConcurrentConnections;
+        options.Limits.MaxConcurrentUpgradedConnections = kestrelOptions.MaxConcurrentConnections;
+        options.Limits.RequestHeadersTimeout = TimeSpan.FromSeconds(kestrelOptions.RequestHeadersTimeoutSeconds);
+        options.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(kestrelOptions.KeepAliveTimeoutMinutes);
+    });
+}
+
+// Configure database
+static void ConfigureDatabase(WebApplicationBuilder builder)
+{
+    var databaseOptions = builder.Configuration.GetSection("Application:Database").Get<SimpleIdentityServer.API.Configuration.DatabaseOptions>();
+    if (databaseOptions == null)
+    {
+        throw new InvalidOperationException("Application:Database configuration section is required");
+    }
+
+    builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    {
+        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"), sqlOptions =>
+        {
+            sqlOptions.CommandTimeout(databaseOptions.CommandTimeoutSeconds);
+            sqlOptions.EnableRetryOnFailure(
+                maxRetryCount: databaseOptions.MaxRetryCount, 
+                maxRetryDelay: TimeSpan.FromSeconds(databaseOptions.MaxRetryDelaySeconds), 
+                errorNumbersToAdd: null);
+        });
+        
+        // Configure OpenIddict to use Entity Framework Core as the default store
+        options.UseOpenIddict();
+    });
+}
+
+// Configure OpenIddict
+static void ConfigureOpenIddict(WebApplicationBuilder builder)
+{
+    var openIddictOptions = builder.Configuration.GetSection("Application:OpenIddict").Get<SimpleIdentityServer.API.Configuration.OpenIddictOptions>();
+    if (openIddictOptions == null)
+    {
+        throw new InvalidOperationException("Application:OpenIddict configuration section is required");
+    }
+
+    var certificateOptions = builder.Configuration.GetSection("Application:Certificates").Get<SimpleIdentityServer.API.Configuration.CertificateOptions>();
+    if (certificateOptions == null)
+    {
+        throw new InvalidOperationException("Application:Certificates configuration section is required");
+    }
+
+    builder.Services.AddOpenIddict()
+        .AddCore(options =>
+        {
+            options.UseEntityFrameworkCore()
+                   .UseDbContext<ApplicationDbContext>();
+        })
+        .AddServer(options =>
+        {
+            options
+                .SetTokenEndpointUris(openIddictOptions.TokenEndpointUri)
+                .SetIntrospectionEndpointUris(openIddictOptions.IntrospectionEndpointUri)
+                .SetConfigurationEndpointUris(openIddictOptions.ConfigurationEndpointUri);
+
+            // Enable the client credentials flow
+            options.AllowClientCredentialsFlow();
+
+            // Register the signing and encryption credentials
+            if (builder.Environment.IsProduction())
+            {
+                // In production, use certificates from configuration
+                options.AddEncryptionCertificate(GetOrCreateEncryptionCertificate(certificateOptions))
+                       .AddSigningCertificate(GetOrCreateSigningCertificate(certificateOptions));
+            }
+            else
+            {
+                // In development, use development certificates
+                options.AddDevelopmentEncryptionCertificate()
+                       .AddDevelopmentSigningCertificate();
+            }
+
+            // Register the ASP.NET Core host and configure the ASP.NET Core options
+            options.UseAspNetCore()
+                   .EnableTokenEndpointPassthrough();
+
+            // Configure the JWT handler
+            options.UseAspNetCore()
+                   .DisableTransportSecurityRequirement();
+
+            // Configure token lifetimes from configuration
+            options.DisableAccessTokenEncryption()
+                   .SetAccessTokenLifetime(TimeSpan.FromMinutes(openIddictOptions.AccessTokenLifetimeMinutes))
+                   .SetRefreshTokenLifetime(TimeSpan.FromDays(openIddictOptions.RefreshTokenLifetimeDays));
+        })
+        .AddValidation(options =>
+        {
+            options.UseLocalServer();
+            options.UseAspNetCore();
+        });
+}
+
+// Helper methods for security logging configuration
+static int GetSecurityLoggingBatchLimit(WebApplicationBuilder builder)
+{
+    return builder.Configuration.GetValue<int>("Application:SecurityLogging:BatchPostingLimit", 50);
+}
+
+static int GetSecurityLoggingBatchPeriod(WebApplicationBuilder builder)
+{
+    return builder.Configuration.GetValue<int>("Application:SecurityLogging:BatchPeriodSeconds", 10);
+}
+
+static int GetSecurityLoggingRetentionDays(WebApplicationBuilder builder)
+{
+    return builder.Configuration.GetValue<int>("Application:SecurityLogging:RetentionDays", 30);
 } 

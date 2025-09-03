@@ -1,0 +1,80 @@
+# Simple Identity Server - Environment Variables Example
+# Copy these variables to a .env file or set them in your environment
+# NEVER commit actual sensitive values to version control
+
+# =============================================================================
+# REQUIRED: Database Configuration
+# =============================================================================
+
+# Strong password for SQL Server SA account (REQUIRED)
+# Use a complex password with at least 8 characters, including uppercase, 
+# lowercase, numbers, and special characters
+DB_PASSWORD=YourSecurePassword123!
+
+# =============================================================================
+# OPTIONAL: Advanced Database Configuration
+# =============================================================================
+
+# If you need custom connection strings, set these:
+# DEFAULT_CONNECTION_STRING=Server=sqlserver,1433;Database=SimpleIdentityServer;MultipleActiveResultSets=true;uid=sa;pwd=YourSecurePassword123!;TrustServerCertificate=true;Encrypt=true
+# SECURITY_LOGS_CONNECTION_STRING=Server=sqlserver,1433;Database=SimpleIdentityServerSecurityLogs;MultipleActiveResultSets=true;uid=sa;pwd=YourSecurePassword123!;TrustServerCertificate=true;Encrypt=true
+
+# =============================================================================
+# OPTIONAL: CORS Configuration
+# =============================================================================
+
+# Semicolon-separated list of allowed origins for CORS
+# For development/testing with the current setup:
+CORS_ALLOWED_ORIGINS=https://identity.dev.test;https://localhost:3000
+
+# For production, specify your actual domains:
+# CORS_ALLOWED_ORIGINS=https://yourdomain.com;https://app.yourdomain.com
+
+# =============================================================================
+# OPTIONAL: Certificate Configuration
+# =============================================================================
+
+# Password for certificate files (if different from default)
+CERT_PASSWORD=SharedCertPassword123!
+
+# =============================================================================
+# USAGE INSTRUCTIONS
+# =============================================================================
+
+# Method 1: Create .env file (recommended for development)
+# 1. Copy this file to .env in the containers directory
+# 2. Update the values with your secure configuration
+# 3. Run: docker-compose up -d
+
+# Method 2: Export environment variables (recommended for production)
+# export DB_PASSWORD="YourSecurePassword123!"
+# export CORS_ALLOWED_ORIGINS="https://yourdomain.com"
+# docker-compose up -d
+
+# Method 3: Pass variables directly
+# DB_PASSWORD="YourSecurePassword123!" docker-compose up -d
+
+# =============================================================================
+# SECURITY BEST PRACTICES
+# =============================================================================
+
+# 1. Use strong, unique passwords (minimum 12 characters)
+# 2. Enable database encryption in production (Encrypt=true)
+# 3. Use proper certificate management in production
+# 4. Restrict CORS origins to only necessary domains
+# 5. Regularly rotate passwords and certificates
+# 6. Monitor logs for security events
+# 7. Use external secret management in production
+
+# =============================================================================
+# PRODUCTION CONSIDERATIONS
+# =============================================================================
+
+# For production deployments, consider:
+# - External secret management (Azure Key Vault, AWS Secrets Manager, etc.)
+# - Managed database services with encryption at rest
+# - Proper certificate lifecycle management
+# - Container orchestration secrets (Kubernetes secrets, Docker swarm secrets)
+# - Audit logging and monitoring
+# - Network security and firewall rules
+# - Regular security updates and vulnerability scanning

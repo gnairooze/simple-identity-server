@@ -1,5 +1,22 @@
 name: simple-identity-env
 
+# Simple Identity Server - Secure Docker Compose Configuration
+# 
+# SECURITY NOTICE:
+# This configuration uses environment variables from production.env file.
+# All sensitive data is externalized to the production.env file.
+#
+# Usage:
+# 1. Review and update production.env with your secure values
+# 2. Ensure production.env has restricted permissions: chmod 600 production.env
+# 3. Run: docker-compose up -d
+#
+# The production.env file contains all environment variables including:
+# - Database credentials and connection strings
+# - CORS allowed origins
+# - Certificate passwords
+# - Load balancer configuration
+
 services:
   # Load Balancer - Caddy
   simple-identity-lb:
@@ -31,24 +48,18 @@ services:
     container_name: simple-identity-server-api-1
     ports:
       - "8081:443"  # Direct access for testing
+    env_file:
+      - production.env
     environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-      - ASPNETCORE_URLS=https://+:443
-      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=SimpleIdentityServer;MultipleActiveResultSets=true;uid=sa;pwd=StrongPassword123!;TrustServerCertificate=true;Encrypt=false
-      - LoadBalancer__EnableForwardedHeaders=true
-      - LoadBalancer__TrustedProxies__0=172.25.0.10
-      - LoadBalancer__ForwardLimit=2
-      - LoadBalancer__RequireHeaderSymmetry=false
-      - CERT_PASSWORD=SharedCertPassword123!
+      # Instance-specific configuration (only values that need to be different per instance)
       - NODE_NAME=api-instance-1
-      - Kestrel__Certificates__Default__Path=/app/certs/identity-dev-test.crt
-      - Kestrel__Certificates__Default__KeyPath=/app/certs/identity-dev-test.key
     volumes:
       - shared_certs:/app/certs
       - ./nginx/ssl/identity-dev-test.crt:/app/certs/identity-dev-test.crt:ro
       - ./nginx/ssl/identity-dev-test.key:/app/certs/identity-dev-test.key:ro
     depends_on:
-      - sqlserver
+      sqlserver:
+        condition: service_healthy
     networks:
       simple-identity-net:
         ipv4_address: 172.25.0.11
@@ -62,24 +73,18 @@ services:
     container_name: simple-identity-server-api-2
     ports:
       - "8082:443"  # Direct access for testing
+    env_file:
+      - production.env
     environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-      - ASPNETCORE_URLS=https://+:443
-      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=SimpleIdentityServer;MultipleActiveResultSets=true;uid=sa;pwd=StrongPassword123!;TrustServerCertificate=true;Encrypt=false
-      - LoadBalancer__EnableForwardedHeaders=true
-      - LoadBalancer__TrustedProxies__0=172.25.0.10
-      - LoadBalancer__ForwardLimit=2
-      - LoadBalancer__RequireHeaderSymmetry=false
-      - CERT_PASSWORD=SharedCertPassword123!
+      # Instance-specific configuration (only values that need to be different per instance)
       - NODE_NAME=api-instance-2
-      - Kestrel__Certificates__Default__Path=/app/certs/identity-dev-test.crt
-      - Kestrel__Certificates__Default__KeyPath=/app/certs/identity-dev-test.key
     volumes:
       - shared_certs:/app/certs
       - ./nginx/ssl/identity-dev-test.crt:/app/certs/identity-dev-test.crt:ro
       - ./nginx/ssl/identity-dev-test.key:/app/certs/identity-dev-test.key:ro
     depends_on:
-      - sqlserver
+      sqlserver:
+        condition: service_healthy
     networks:
       simple-identity-net:
         ipv4_address: 172.25.0.12
@@ -93,24 +98,18 @@ services:
     container_name: simple-identity-server-api-3
     ports:
       - "8083:443"  # Direct access for testing
+    env_file:
+      - production.env
     environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-      - ASPNETCORE_URLS=https://+:443
-      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=SimpleIdentityServer;MultipleActiveResultSets=true;uid=sa;pwd=StrongPassword123!;TrustServerCertificate=true;Encrypt=false
-      - LoadBalancer__EnableForwardedHeaders=true
-      - LoadBalancer__TrustedProxies__0=172.25.0.10
-      - LoadBalancer__ForwardLimit=2
-      - LoadBalancer__RequireHeaderSymmetry=false
-      - CERT_PASSWORD=SharedCertPassword123!
+      # Instance-specific configuration (only values that need to be different per instance)
       - NODE_NAME=api-instance-3
-      - Kestrel__Certificates__Default__Path=/app/certs/identity-dev-test.crt
-      - Kestrel__Certificates__Default__KeyPath=/app/certs/identity-dev-test.key
     volumes:
       - shared_certs:/app/certs
       - ./nginx/ssl/identity-dev-test.crt:/app/certs/identity-dev-test.crt:ro
       - ./nginx/ssl/identity-dev-test.key:/app/certs/identity-dev-test.key:ro
     depends_on:
-      - sqlserver
+      sqlserver:
+        condition: service_healthy
     networks:
       simple-identity-net:
         ipv4_address: 172.25.0.13
@@ -120,11 +119,8 @@ services:
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: simple-identity-server-db
-    environment:
-      - ACCEPT_EULA=Y
-      - SA_PASSWORD=StrongPassword123!
-      - MSSQL_PID=Express
-      - MSSQL_MEMORY_LIMIT_MB=4096
+    env_file:
+      - production.env
     ports:
       - "1433:1433"
     volumes:
@@ -141,7 +137,7 @@ services:
         reservations:
           memory: 1G
     healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P StrongPassword123! -Q 'SELECT 1' -C"]
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $$SA_PASSWORD -Q 'SELECT 1' -C"]
       interval: 30s
       timeout: 10s
       retries: 5
