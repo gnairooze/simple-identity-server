@@ -3,6 +3,7 @@ using Serilog;
 using System.Collections.Concurrent;
 using System.Net;
 using Microsoft.Data.SqlClient;
+using SimpleIdentityServer.API.Configuration;
 using SimpleIdentityServer.API.Utils;
 
 namespace SimpleIdentityServer.API.Middleware;
@@ -149,7 +150,7 @@ public class SecurityMonitoringMiddleware
     private void LogSecurityEvent(HttpContext context, string requestId, string eventType, object? additionalData = null)
     {
         var clientId = ExtractClientIdFromAdditionalData(additionalData);
-        var nodeName = Environment.GetEnvironmentVariable("SIMPLE_IDENTITY_SERVER_NODE_NAME") ?? Environment.MachineName;
+        var nodeName = Environment.GetEnvironmentVariable(EnvironmentVariablesNames.NodeName) ?? Environment.MachineName;
         
         // Use Serilog for structured logging to SQL Server
         Log.ForContext("RequestId", requestId)
@@ -170,7 +171,7 @@ public class SecurityMonitoringMiddleware
 
     private void LogSecurityEvent(HttpContext context, string requestId, string eventType, TimeSpan duration)
     {
-        var nodeName = Environment.GetEnvironmentVariable("SIMPLE_IDENTITY_SERVER_NODE_NAME") ?? Environment.MachineName;
+        var nodeName = Environment.GetEnvironmentVariable(EnvironmentVariablesNames.NodeName) ?? Environment.MachineName;
         var durationMs = duration.TotalMilliseconds;
         
         // Use Serilog for structured logging to SQL Server
@@ -200,7 +201,7 @@ public class SecurityMonitoringMiddleware
 
     private void LogSecurityException(HttpContext context, string requestId, Exception ex, TimeSpan duration)
     {
-        var nodeName = Environment.GetEnvironmentVariable("SIMPLE_IDENTITY_SERVER_NODE_NAME") ?? Environment.MachineName;
+        var nodeName = Environment.GetEnvironmentVariable(EnvironmentVariablesNames.NodeName) ?? Environment.MachineName;
         var durationMs = duration.TotalMilliseconds;
         
         // Use Serilog for structured logging to SQL Server

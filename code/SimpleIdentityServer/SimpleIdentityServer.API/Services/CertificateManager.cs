@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using SimpleIdentityServer.API.Configuration;
 
 namespace SimpleIdentityServer.API.Services;
 
@@ -55,11 +56,11 @@ public static class CertificateManager
         if (!string.IsNullOrEmpty(configPassword))
             return configPassword;
             
-        var envPassword = Environment.GetEnvironmentVariable("SIMPLE_IDENTITY_SERVER_CERT_PASSWORD");
+        var envPassword = Environment.GetEnvironmentVariable(EnvironmentVariablesNames.CertificatePassword);
         if (!string.IsNullOrEmpty(envPassword))
             return envPassword;
             
-        throw new InvalidOperationException("Certificate password is required. Set SIMPLE_IDENTITY_SERVER_CERT_PASSWORD environment variable or Application:Certificates:Password in configuration.");
+        throw new InvalidOperationException($"Certificate password is required. Set {EnvironmentVariablesNames.CertificatePassword} environment variable or Application:Certificates:Password in configuration.");
     }
 
     private static X509Certificate2 CreateSelfSignedCertificate(string subjectName)

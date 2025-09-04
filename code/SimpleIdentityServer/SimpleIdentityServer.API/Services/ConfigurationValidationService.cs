@@ -64,15 +64,15 @@ public class ConfigurationValidationService
             if (_environment.IsDevelopment())
             {
                 // In development, check if environment variable is provided
-                var envConnection = Environment.GetEnvironmentVariable("SIMPLE_IDENTITY_SERVER_DEFAULT_CONNECTION_STRING");
+                var envConnection = Environment.GetEnvironmentVariable(EnvironmentVariablesNames.DefaultConnectionString);
                 if (string.IsNullOrWhiteSpace(envConnection))
                 {
-                    _validationErrors.Add("SIMPLE_IDENTITY_SERVER_DEFAULT_CONNECTION_STRING environment variable is required in development when DefaultConnection is not set in appsettings.json");
+                    _validationErrors.Add($"{EnvironmentVariablesNames.DefaultConnectionString} environment variable is required in development when DefaultConnection is not set in appsettings.json");
                 }
             }
             else
             {
-                _validationErrors.Add("SIMPLE_IDENTITY_SERVER_DEFAULT_CONNECTION_STRING environment variable is required in production");
+                _validationErrors.Add($"{EnvironmentVariablesNames.DefaultConnectionString} environment variable is required in production");
             }
         }
 
@@ -80,15 +80,15 @@ public class ConfigurationValidationService
         {
             if (_environment.IsDevelopment())
             {
-                var envConnection = Environment.GetEnvironmentVariable("SIMPLE_IDENTITY_SERVER_SECURITY_LOGS_CONNECTION_STRING");
+                var envConnection = Environment.GetEnvironmentVariable(EnvironmentVariablesNames.SecurityLogsConnectionString);
                 if (string.IsNullOrWhiteSpace(envConnection))
                 {
-                    _validationErrors.Add("SIMPLE_IDENTITY_SERVER_SECURITY_LOGS_CONNECTION_STRING environment variable is required in development when SecurityLogsConnection is not set in appsettings.json");
+                    _validationErrors.Add($"{EnvironmentVariablesNames.SecurityLogsConnectionString} environment variable is required in development when SecurityLogsConnection is not set in appsettings.json");
                 }
             }
             else
             {
-                _validationErrors.Add("SIMPLE_IDENTITY_SERVER_SECURITY_LOGS_CONNECTION_STRING environment variable is required in production");
+                _validationErrors.Add($"{EnvironmentVariablesNames.SecurityLogsConnectionString} environment variable is required in production");
             }
         }
     }
@@ -272,10 +272,10 @@ public class ConfigurationValidationService
         // In production, CORS origins must be specified
         if (!_environment.IsDevelopment())
         {
-            var corsOrigins = Environment.GetEnvironmentVariable("SIMPLE_IDENTITY_SERVER_CORS_ALLOWED_ORIGINS");
+            var corsOrigins = Environment.GetEnvironmentVariable(EnvironmentVariablesNames.CorsAllowedOrigins);
             if (string.IsNullOrWhiteSpace(corsOrigins))
             {
-                _validationErrors.Add("SIMPLE_IDENTITY_SERVER_CORS_ALLOWED_ORIGINS environment variable is required in production");
+                _validationErrors.Add($"{EnvironmentVariablesNames.CorsAllowedOrigins} environment variable is required in production");
             }
         }
     }
