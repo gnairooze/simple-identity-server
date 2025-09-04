@@ -6,6 +6,9 @@ public static class MiddlewareConfiguration
 {
     public static void ConfigureMiddleware(WebApplication app, LoadBalancerOptions loadBalancerConfig)
     {
+        // Configure global exception handler - MUST be early in pipeline to catch all exceptions
+        app.ConfigureGlobalExceptionHandler();
+
         // Configure the HTTP request pipeline.
         if (app.Environment.IsDevelopment())
         {

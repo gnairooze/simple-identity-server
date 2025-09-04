@@ -22,9 +22,9 @@ This document provides a comprehensive security checklist for SimpleIdentityServ
 - **Load balancer support** - Proper forwarded headers handling for real client IP detection
 - **Security headers** - Implemented at load balancer level (Caddy)
 - **Authorization policies** - Scope-based authorization implemented in Resource.API
+- **Global exception handling** - Formal UseExceptionHandler middleware with SecurityMonitoringMiddleware integration
 
 ### ⚠️ Needs Immediate Attention
-- **Global exception handling** - SecurityMonitoringMiddleware handles exceptions but no formal UseExceptionHandler middleware
 - **Input validation on API models** - No validation attributes on request DTOs/models (configuration validation is implemented)
 - **Transport security requirements** - Still disabled in Resource.API (`RequireHttpsMetadata = false`)
 
@@ -270,39 +270,39 @@ app.UseMiddleware<SecurityLoggingMiddleware>();
 
 ### Error Handling
 
-**Current Status**: ⚠️ **PARTIALLY IMPLEMENTED**
+**Current Status**: ✅ **COMPLETED**
 
 **Actions Required**:
-- [ ] **Implement formal global exception handling middleware** - SecurityMonitoringMiddleware logs exceptions but no UseExceptionHandler middleware
+- [x] ~~**Implement formal global exception handling middleware**~~ ✅ **COMPLETED** - UseExceptionHandler middleware implemented with SecurityMonitoringMiddleware integration
 - [x] ~~Remove sensitive information from error responses~~ ✅ **COMPLETED** - DebugLoggingMiddleware masks sensitive headers
-- [ ] Add custom error pages
+- [ ] Add custom error pages - **OPTIONAL** (API returns JSON responses)
 - [x] ~~Log all exceptions securely~~ ✅ **COMPLETED** - SecurityMonitoringMiddleware logs exceptions with structured logging and context
 
-**Implementation**:
+**✅ IMPLEMENTED SOLUTION**:
 ```csharp
+// In MiddlewareConfiguration.cs
+app.ConfigureGlobalExceptionHandler();
+
+// GlobalExceptionHandler implementation
 app.UseExceptionHandler(errorApp =>
 {
     errorApp.Run(async context =>
     {
-        context.Response.StatusCode = 500;
-        context.Response.ContentType = "application/json";
-        
-        var error = context.Features.Get<IExceptionHandlerFeature>();
-        if (error != null)
+        var exceptionFeature = context.Features.Get<IExceptionHandlerFeature>();
+        if (exceptionFeature?.Error != null)
         {
-            // Log the error securely (don't expose sensitive data)
-            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-            logger.LogError(error.Error, "Unhandled exception occurred");
-            
-            await context.Response.WriteAsync(JsonSerializer.Serialize(new
-            {
-                error = "Internal server error",
-                message = "An error occurred processing your request"
-            }));
+            await HandleExceptionAsync(context, exceptionFeature.Error, app.Environment);
         }
     });
 });
 ```
+
+**Key Features Implemented**:
+1. **Dual Logging**: SecurityMonitoringMiddleware logs with "REQUEST_EXCEPTION", GlobalExceptionHandler logs with "GLOBAL_EXCEPTION"
+2. **Exception Classification**: Maps exception types to appropriate HTTP status codes
+3. **Security Integration**: Reuses RequestId and security context from SecurityMonitoringMiddleware
+4. **Environment-aware**: Stack traces only in development, user-friendly messages in production
+5. **Structured JSON Responses**: Consistent error response format with RequestId correlation
 
 ## Current Implementation Summary
 
@@ -316,24 +316,25 @@ app.UseExceptionHandler(errorApp =>
 6. **Load Balancer Security** - Proper forwarded headers handling, trusted proxy configuration, and client IP detection
 7. **Security Headers** - Implemented at load balancer level with comprehensive security headers
 8. **Database Resilience** - Connection retry logic, command timeouts, and error handling
+9. **Global Exception Handling** - Formal UseExceptionHandler middleware with dual logging and SecurityMonitoringMiddleware integration
 
 ### ⚠️ **REMAINING CRITICAL ITEMS** (Immediate Attention Required)
 
-1. **Global Exception Handling** - No formal `UseExceptionHandler` middleware in the application pipeline (SecurityMonitoringMiddleware handles logging but not formal error handling)
-2. **Input Validation on API Models** - No validation attributes on API request DTOs/models (configuration validation is implemented)
-3. **Transport Security** - Resource.API still has `RequireHttpsMetadata = false` (needs verification)
+1. **Input Validation on API Models** - No validation attributes on API request DTOs/models (configuration validation is implemented)
+2. **Transport Security** - Resource.API still has `RequireHttpsMetadata = false` (needs verification)
 
 ### ✅ **RECENTLY RESOLVED CRITICAL ITEMS**
 
 1. **✅ Database Credentials Security** - **RESOLVED**: All hardcoded credentials removed from appsettings.json, environment variable configuration implemented
 2. **✅ Application-Level Security Headers** - **RESOLVED**: Comprehensive SecurityHeadersMiddleware implemented with OWASP recommendations
+3. **✅ Global Exception Handling** - **RESOLVED**: Formal UseExceptionHandler middleware implemented with SecurityMonitoringMiddleware integration
 
 ### 📊 **Security Risk Assessment Update**
 
-- **Overall Risk Level**: Reduced from **HIGH** to **LOW-MEDIUM**
-- **Critical Issues Resolved**: 7 of 8 critical items completed (87.5% completion rate)
-- **Major Security Improvements**: 10+ significant security features implemented
-- **Remaining High-Priority Items**: 3 items requiring attention (significantly reduced from 8 items)
+- **Overall Risk Level**: Reduced from **HIGH** to **LOW**
+- **Critical Issues Resolved**: 8 of 9 critical items completed (88.9% completion rate)
+- **Major Security Improvements**: 11+ significant security features implemented
+- **Remaining High-Priority Items**: 2 items requiring attention (significantly reduced from 8 items)
 
 ## Implementation Priority
 
@@ -347,7 +348,7 @@ app.UseExceptionHandler(errorApp =>
 ### Phase 2 - Core Security Features (Week 2-3)
 1. ~~Implement comprehensive logging and monitoring~~ - ✅ **COMPLETED**
 2. **Add input validation on API models** - ⚠️ **PARTIALLY DONE** (configuration validation completed, API model validation pending)
-3. **Implement formal global exception handling middleware** - ⚠️ **PARTIALLY DONE** (SecurityMonitoringMiddleware logs exceptions, UseExceptionHandler middleware missing)
+3. ~~**Implement formal global exception handling middleware**~~ - ✅ **COMPLETED** - UseExceptionHandler middleware with SecurityMonitoringMiddleware integration
 4. ~~Add authentication/authorization enhancements~~ - ✅ **COMPLETED** (scope-based auth and field-level authorization implemented)
 5. ~~Configure secure CORS policies~~ - ✅ **COMPLETED** (environment variable-based CORS configuration implemented)
 
