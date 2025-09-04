@@ -39,7 +39,7 @@ public static class GlobalExceptionHandler
     {
         // Get RequestId from context (set by SecurityMonitoringMiddleware) or generate new one
         var requestId = context.Items["RequestId"]?.ToString() ?? Guid.NewGuid().ToString("N")[..8];
-        var nodeName = Environment.GetEnvironmentVariable("NODE_NAME") ?? Environment.MachineName;
+        var nodeName = Environment.GetEnvironmentVariable("SIMPLE_IDENTITY_SERVER_NODE_NAME") ?? Environment.MachineName;
         
         // Determine status code and error details based on exception type
         var (statusCode, errorCode, userMessage) = GetErrorDetails(exception);

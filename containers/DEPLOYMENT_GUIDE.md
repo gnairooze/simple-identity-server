@@ -27,13 +27,13 @@ cat production.env
 **REQUIRED CHANGES:**
 ```bash
 # 1. Change the database password (CRITICAL)
-DB_PASSWORD=YourSecureProductionPassword123!
+SIMPLE_IDENTITY_SERVER_DB_PASSWORD=YourSecureProductionPassword123!
 
 # 2. Configure CORS for your domains (CRITICAL)
-CORS_ALLOWED_ORIGINS=https://yourdomain.com;https://app.yourdomain.com
+SIMPLE_IDENTITY_SERVER_CORS_ALLOWED_ORIGINS=https://yourdomain.com;https://app.yourdomain.com
 
 # 3. Update certificate password (RECOMMENDED)
-CERT_PASSWORD=YourSecureCertPassword123!
+SIMPLE_IDENTITY_SERVER_CERT_PASSWORD=YourSecureCertPassword123!
 ```
 
 ### 3. **Set Secure File Permissions**
@@ -69,8 +69,8 @@ docker-compose logs -f
 # Override specific variables as needed
 
 # Example: Using external database
-export DEFAULT_CONNECTION_STRING="Server=prod-db.company.com;Database=SimpleIdentityServer;..."
-export SECURITY_LOGS_CONNECTION_STRING="Server=prod-db.company.com;Database=SecurityLogs;..."
+export SIMPLE_IDENTITY_SERVER_DEFAULT_CONNECTION_STRING="Server=prod-db.company.com;Database=SimpleIdentityServer;..."
+export SIMPLE_IDENTITY_SERVER_SECURITY_LOGS_CONNECTION_STRING="Server=prod-db.company.com;Database=SecurityLogs;..."
 
 # Start with overrides
 docker-compose up -d
@@ -111,11 +111,11 @@ docker exec -it simple-identity-server-db /opt/mssql-tools18/bin/sqlcmd -S local
 
 | Category | Variable | Required | Description |
 |----------|----------|----------|-------------|
-| **Database** | `DB_PASSWORD` | ✅ Yes | SQL Server SA password |
-| **Database** | `DEFAULT_CONNECTION_STRING` | No | Custom main DB connection |
-| **Database** | `SECURITY_LOGS_CONNECTION_STRING` | No | Custom logs DB connection |
-| **CORS** | `CORS_ALLOWED_ORIGINS` | ✅ Yes | Allowed origins (semicolon-separated) |
-| **Certificates** | `CERT_PASSWORD` | No | Certificate password |
+| **Database** | `SIMPLE_IDENTITY_SERVER_DB_PASSWORD` | ✅ Yes | SQL Server SA password |
+| **Database** | `SIMPLE_IDENTITY_SERVER_DEFAULT_CONNECTION_STRING` | No | Custom main DB connection |
+| **Database** | `SIMPLE_IDENTITY_SERVER_SECURITY_LOGS_CONNECTION_STRING` | No | Custom logs DB connection |
+| **CORS** | `SIMPLE_IDENTITY_SERVER_CORS_ALLOWED_ORIGINS` | ✅ Yes | Allowed origins (semicolon-separated) |
+| **Certificates** | `SIMPLE_IDENTITY_SERVER_CERT_PASSWORD` | No | Certificate password |
 | **ASP.NET** | `ASPNETCORE_ENVIRONMENT` | No | Environment name |
 | **Load Balancer** | `LOADBALANCER_*` | No | Load balancer settings |
 
@@ -124,22 +124,22 @@ docker exec -it simple-identity-server-db /opt/mssql-tools18/bin/sqlcmd -S local
 **Development:**
 ```bash
 # Use development values in production.env
-CORS_ALLOWED_ORIGINS=https://localhost:3000;https://identity.dev.test
-DB_PASSWORD=DevPassword123!
+SIMPLE_IDENTITY_SERVER_CORS_ALLOWED_ORIGINS=https://localhost:3000;https://identity.dev.test
+SIMPLE_IDENTITY_SERVER_DB_PASSWORD=DevPassword123!
 ```
 
 **Staging:**
 ```bash
 # Use staging values
-CORS_ALLOWED_ORIGINS=https://staging.yourdomain.com
-DB_PASSWORD=StagingSecurePassword123!
+SIMPLE_IDENTITY_SERVER_CORS_ALLOWED_ORIGINS=https://staging.yourdomain.com
+SIMPLE_IDENTITY_SERVER_DB_PASSWORD=StagingSecurePassword123!
 ```
 
 **Production:**
 ```bash
 # Use production values
-CORS_ALLOWED_ORIGINS=https://yourdomain.com;https://app.yourdomain.com
-DB_PASSWORD=ProductionSecurePassword123!
+SIMPLE_IDENTITY_SERVER_CORS_ALLOWED_ORIGINS=https://yourdomain.com;https://app.yourdomain.com
+SIMPLE_IDENTITY_SERVER_DB_PASSWORD=ProductionSecurePassword123!
 ```
 
 ## 🛡️ Security Best Practices
@@ -161,7 +161,7 @@ echo "production.env" >> .gitignore
 - Use **different passwords** for each environment
 
 ### 3. **CORS Security**
-- Only include **necessary domains** in CORS_ALLOWED_ORIGINS
+- Only include **necessary domains** in SIMPLE_IDENTITY_SERVER_CORS_ALLOWED_ORIGINS
 - **Never use wildcards** (*) in production
 - Use **HTTPS only** for allowed origins
 
@@ -183,9 +183,9 @@ chmod 600 production.env
 
 **2. Database Connection Failed / Login Failed for 'sa'**
 ```bash
-# Check if DB_PASSWORD is set correctly in both SQL Server and API containers
+# Check if SIMPLE_IDENTITY_SERVER_DB_PASSWORD is set correctly in both SQL Server and API containers
 docker-compose exec sqlserver printenv | grep SA_PASSWORD
-docker-compose exec api-instance-1 printenv | grep DB_PASSWORD
+docker-compose exec api-instance-1 printenv | grep SIMPLE_IDENTITY_SERVER_DB_PASSWORD
 
 # Verify connection strings are properly formatted
 docker-compose exec api-instance-1 printenv | grep CONNECTION_STRING
@@ -204,7 +204,7 @@ docker-compose restart api-instance-1 api-instance-2 api-instance-3
 **3. CORS Issues**
 ```bash
 # Verify CORS configuration
-docker-compose exec api-instance-1 printenv | grep CORS_ALLOWED_ORIGINS
+docker-compose exec api-instance-1 printenv | grep SIMPLE_IDENTITY_SERVER_CORS_ALLOWED_ORIGINS
 
 # Check API logs for CORS errors
 docker-compose logs api-instance-1 | grep -i cors
@@ -216,7 +216,7 @@ docker-compose logs api-instance-1 | grep -i cors
 docker-compose exec api-instance-1 ls -la /app/certs/
 
 # Verify certificate password
-docker-compose exec api-instance-1 printenv | grep CERT_PASSWORD
+docker-compose exec api-instance-1 printenv | grep SIMPLE_IDENTITY_SERVER_CERT_PASSWORD
 ```
 
 ## 📊 Monitoring and Maintenance

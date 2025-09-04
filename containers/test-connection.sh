@@ -20,9 +20,9 @@ echo "✅ production.env file found"
 export $(grep -v '^#' production.env | xargs)
 
 echo "📋 Environment Variables:"
-echo "DB_PASSWORD: ${DB_PASSWORD:0:3}*** (showing first 3 characters)"
-echo "DEFAULT_CONNECTION_STRING: ${DEFAULT_CONNECTION_STRING:0:20}..."
-echo "SECURITY_LOGS_CONNECTION_STRING: ${SECURITY_LOGS_CONNECTION_STRING:0:20}..."
+echo "SIMPLE_IDENTITY_SERVER_DB_PASSWORD: ${SIMPLE_IDENTITY_SERVER_DB_PASSWORD:0:3}*** (showing first 3 characters)"
+echo "SIMPLE_IDENTITY_SERVER_DEFAULT_CONNECTION_STRING: ${SIMPLE_IDENTITY_SERVER_DEFAULT_CONNECTION_STRING:0:20}..."
+echo "SIMPLE_IDENTITY_SERVER_SECURITY_LOGS_CONNECTION_STRING: ${SIMPLE_IDENTITY_SERVER_SECURITY_LOGS_CONNECTION_STRING:0:20}..."
 echo ""
 
 # Check if Docker is running
@@ -46,11 +46,11 @@ if docker-compose ps sqlserver | grep -q "healthy"; then
     # Test SQL Server connection
     echo ""
     echo "🔌 Testing SQL Server Connection:"
-    if docker-compose exec -T sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "${DB_PASSWORD}" -Q "SELECT 'Connection successful' as Status" -C -h -1; then
+    if docker-compose exec -T sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "${SIMPLE_IDENTITY_SERVER_DB_PASSWORD}" -Q "SELECT 'Connection successful' as Status" -C -h -1; then
         echo "✅ SQL Server connection successful"
     else
         echo "❌ SQL Server connection failed"
-        echo "Check if DB_PASSWORD matches the SQL Server SA password"
+        echo "Check if SIMPLE_IDENTITY_SERVER_DB_PASSWORD matches the SQL Server SA password"
     fi
     
 else
@@ -88,7 +88,7 @@ echo "1. View all logs: docker-compose logs -f"
 echo "2. View SQL Server logs: docker-compose logs sqlserver"
 echo "3. View API logs: docker-compose logs api-instance-1"
 echo "4. Restart services: docker-compose restart"
-echo "5. Check environment variables: docker-compose exec api-instance-1 printenv | grep -E '(DB_PASSWORD|CONNECTION_STRING)'"
+echo "5. Check environment variables: docker-compose exec api-instance-1 printenv | grep -E '(SIMPLE_IDENTITY_SERVER_DB_PASSWORD|CONNECTION_STRING)'"
 
 echo ""
 echo "=== Test Complete ==="

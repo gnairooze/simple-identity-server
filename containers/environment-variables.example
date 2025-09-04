@@ -9,15 +9,15 @@
 # Strong password for SQL Server SA account (REQUIRED)
 # Use a complex password with at least 8 characters, including uppercase, 
 # lowercase, numbers, and special characters
-DB_PASSWORD=YourSecurePassword123!
+SIMPLE_IDENTITY_SERVER_DB_PASSWORD=YourSecurePassword123!
 
 # =============================================================================
 # OPTIONAL: Advanced Database Configuration
 # =============================================================================
 
 # If you need custom connection strings, set these:
-# DEFAULT_CONNECTION_STRING=Server=sqlserver,1433;Database=SimpleIdentityServer;MultipleActiveResultSets=true;uid=sa;pwd=YourSecurePassword123!;TrustServerCertificate=true;Encrypt=true
-# SECURITY_LOGS_CONNECTION_STRING=Server=sqlserver,1433;Database=SimpleIdentityServerSecurityLogs;MultipleActiveResultSets=true;uid=sa;pwd=YourSecurePassword123!;TrustServerCertificate=true;Encrypt=true
+# SIMPLE_IDENTITY_SERVER_DEFAULT_CONNECTION_STRING=Server=sqlserver,1433;Database=SimpleIdentityServer;MultipleActiveResultSets=true;uid=sa;pwd=YourSecurePassword123!;TrustServerCertificate=true;Encrypt=true
+# SIMPLE_IDENTITY_SERVER_SECURITY_LOGS_CONNECTION_STRING=Server=sqlserver,1433;Database=SimpleIdentityServerSecurityLogs;MultipleActiveResultSets=true;uid=sa;pwd=YourSecurePassword123!;TrustServerCertificate=true;Encrypt=true
 
 # =============================================================================
 # OPTIONAL: CORS Configuration
@@ -25,17 +25,17 @@ DB_PASSWORD=YourSecurePassword123!
 
 # Semicolon-separated list of allowed origins for CORS
 # For development/testing with the current setup:
-CORS_ALLOWED_ORIGINS=https://identity.dev.test;https://localhost:3000
+SIMPLE_IDENTITY_SERVER_CORS_ALLOWED_ORIGINS=https://identity.dev.test;https://localhost:3000
 
 # For production, specify your actual domains:
-# CORS_ALLOWED_ORIGINS=https://yourdomain.com;https://app.yourdomain.com
+# SIMPLE_IDENTITY_SERVER_CORS_ALLOWED_ORIGINS=https://yourdomain.com;https://app.yourdomain.com
 
 # =============================================================================
 # OPTIONAL: Certificate Configuration
 # =============================================================================
 
 # Password for certificate files (if different from default)
-CERT_PASSWORD=SharedCertPassword123!
+SIMPLE_IDENTITY_SERVER_CERT_PASSWORD=SharedCertPassword123!
 
 # =============================================================================
 # USAGE INSTRUCTIONS
@@ -47,12 +47,12 @@ CERT_PASSWORD=SharedCertPassword123!
 # 3. Run: docker-compose up -d
 
 # Method 2: Export environment variables (recommended for production)
-# export DB_PASSWORD="YourSecurePassword123!"
-# export CORS_ALLOWED_ORIGINS="https://yourdomain.com"
+# export SIMPLE_IDENTITY_SERVER_DB_PASSWORD="YourSecurePassword123!"
+# export SIMPLE_IDENTITY_SERVER_CORS_ALLOWED_ORIGINS="https://yourdomain.com"
 # docker-compose up -d
 
 # Method 3: Pass variables directly
-# DB_PASSWORD="YourSecurePassword123!" docker-compose up -d
+# SIMPLE_IDENTITY_SERVER_DB_PASSWORD="YourSecurePassword123!" docker-compose up -d
 
 # =============================================================================
 # SECURITY BEST PRACTICES

@@ -9,8 +9,8 @@ public static class ApplicationConfiguration
     public static void ConfigureSecureEnvironmentSettings(WebApplicationBuilder builder)
     {
         // Get connection strings from environment variables
-        var defaultConnection = Environment.GetEnvironmentVariable("DEFAULT_CONNECTION_STRING");
-        var securityLogsConnection = Environment.GetEnvironmentVariable("SECURITY_LOGS_CONNECTION_STRING");
+        var defaultConnection = Environment.GetEnvironmentVariable("SIMPLE_IDENTITY_SERVER_DEFAULT_CONNECTION_STRING");
+        var securityLogsConnection = Environment.GetEnvironmentVariable("SIMPLE_IDENTITY_SERVER_SECURITY_LOGS_CONNECTION_STRING");
         
         if (!string.IsNullOrEmpty(defaultConnection))
         {
@@ -24,7 +24,7 @@ public static class ApplicationConfiguration
         }
         else
         {
-            throw new InvalidOperationException("DEFAULT_CONNECTION_STRING environment variable is required in production");
+            throw new InvalidOperationException("SIMPLE_IDENTITY_SERVER_DEFAULT_CONNECTION_STRING environment variable is required in production");
         }
         
         if (!string.IsNullOrEmpty(securityLogsConnection))
@@ -39,18 +39,18 @@ public static class ApplicationConfiguration
         }
         else
         {
-            throw new InvalidOperationException("SECURITY_LOGS_CONNECTION_STRING environment variable is required in production");
+            throw new InvalidOperationException("SIMPLE_IDENTITY_SERVER_SECURITY_LOGS_CONNECTION_STRING environment variable is required in production");
         }
 
         // Configure certificate password from environment variable
-        var certPassword = Environment.GetEnvironmentVariable("CERT_PASSWORD");
+        var certPassword = Environment.GetEnvironmentVariable("SIMPLE_IDENTITY_SERVER_CERT_PASSWORD");
         if (!string.IsNullOrEmpty(certPassword))
         {
             builder.Configuration["Application:Certificates:Password"] = certPassword;
         }
         else
         {
-            throw new InvalidOperationException("CERT_PASSWORD environment variable is required in production");
+            throw new InvalidOperationException("SIMPLE_IDENTITY_SERVER_CERT_PASSWORD environment variable is required in production");
         }
     }
 
@@ -82,14 +82,14 @@ public static class ApplicationConfiguration
                 if (builder.Environment.IsProduction())
                 {
                     // In production, only allow specific origins from environment variables
-                    var allowedOrigins = Environment.GetEnvironmentVariable("CORS_ALLOWED_ORIGINS")?.Split(';') ?? Array.Empty<string>();
+                    var allowedOrigins = Environment.GetEnvironmentVariable("SIMPLE_IDENTITY_SERVER_CORS_ALLOWED_ORIGINS")?.Split(';') ?? Array.Empty<string>();
                     if (allowedOrigins.Length > 0 && !string.IsNullOrWhiteSpace(allowedOrigins[0]))
                     {
                         policy.WithOrigins(allowedOrigins);
                     }
                     else
                     {
-                        throw new InvalidOperationException("CORS_ALLOWED_ORIGINS environment variable is required in production");
+                        throw new InvalidOperationException("SIMPLE_IDENTITY_SERVER_CORS_ALLOWED_ORIGINS environment variable is required in production");
                     }
                 }
                 else

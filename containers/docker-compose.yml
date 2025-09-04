@@ -52,7 +52,7 @@ services:
       - production.env
     environment:
       # Instance-specific configuration (only values that need to be different per instance)
-      - NODE_NAME=api-instance-1
+      - SIMPLE_IDENTITY_SERVER_NODE_NAME=api-instance-1
     volumes:
       - shared_certs:/app/certs
       - ./nginx/ssl/identity-dev-test.crt:/app/certs/identity-dev-test.crt:ro
@@ -77,7 +77,7 @@ services:
       - production.env
     environment:
       # Instance-specific configuration (only values that need to be different per instance)
-      - NODE_NAME=api-instance-2
+      - SIMPLE_IDENTITY_SERVER_NODE_NAME=api-instance-2
     volumes:
       - shared_certs:/app/certs
       - ./nginx/ssl/identity-dev-test.crt:/app/certs/identity-dev-test.crt:ro
@@ -102,7 +102,7 @@ services:
       - production.env
     environment:
       # Instance-specific configuration (only values that need to be different per instance)
-      - NODE_NAME=api-instance-3
+      - SIMPLE_IDENTITY_SERVER_NODE_NAME=api-instance-3
     volumes:
       - shared_certs:/app/certs
       - ./nginx/ssl/identity-dev-test.crt:/app/certs/identity-dev-test.crt:ro

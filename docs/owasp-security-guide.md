@@ -173,7 +173,7 @@ app.UseRateLimiter();
 1. **✅ Secure Configuration Management**:
    - All hardcoded credentials removed from appsettings.json
    - Environment variable configuration implemented with `ConfigureSecureConnectionStrings()`
-   - Production requires `DEFAULT_CONNECTION_STRING` and `SECURITY_LOGS_CONNECTION_STRING` environment variables
+   - Production requires `SIMPLE_IDENTITY_SERVER_DEFAULT_CONNECTION_STRING` and `SIMPLE_IDENTITY_SERVER_SECURITY_LOGS_CONNECTION_STRING` environment variables
    - Development fallback to localhost with Integrated Security
    - Documentation created: `ENVIRONMENT_VARIABLES.md`
 
@@ -185,7 +185,7 @@ app.UseRateLimiter();
    - Server information disclosure prevention
 
 3. **✅ Proper CORS Configuration**:
-   - Environment-based CORS policy with `CORS_ALLOWED_ORIGINS`
+   - Environment-based CORS policy with `SIMPLE_IDENTITY_SERVER_CORS_ALLOWED_ORIGINS`
    - Production: Only specified origins allowed
    - Development: Localhost origins for testing
    - Restricted methods: GET, POST, OPTIONS only
@@ -200,9 +200,9 @@ app.UseRateLimiter();
 5. **✅ Environment Variable Security**:
    ```bash
    # Required in production
-   DEFAULT_CONNECTION_STRING="Server=...;Database=...;User Id=...;Password=...;Encrypt=true"
-   SECURITY_LOGS_CONNECTION_STRING="Server=...;Database=...;User Id=...;Password=...;Encrypt=true"
-   CORS_ALLOWED_ORIGINS="https://yourdomain.com;https://app.yourdomain.com"
+   SIMPLE_IDENTITY_SERVER_DEFAULT_CONNECTION_STRING="Server=...;Database=...;User Id=...;Password=...;Encrypt=true"
+   SIMPLE_IDENTITY_SERVER_SECURITY_LOGS_CONNECTION_STRING="Server=...;Database=...;User Id=...;Password=...;Encrypt=true"
+   SIMPLE_IDENTITY_SERVER_CORS_ALLOWED_ORIGINS="https://yourdomain.com;https://app.yourdomain.com"
    ```
 
 ### 9. API9:2023 - Improper Inventory Management

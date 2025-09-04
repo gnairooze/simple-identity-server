@@ -12,7 +12,7 @@ public static class SecurityLoggingConfiguration
     {
         // Get connection string from environment variables or configuration
         var connectionString = GetSecurityLogsConnectionString(builder);
-        var nodeName = Environment.GetEnvironmentVariable("NODE_NAME") ?? Environment.MachineName;
+        var nodeName = Environment.GetEnvironmentVariable("SIMPLE_IDENTITY_SERVER_NODE_NAME") ?? Environment.MachineName;
         
         // Define custom columns for security logs
         var columnOptions = new ColumnOptions
@@ -138,7 +138,7 @@ public static class SecurityLoggingConfiguration
         // If connection string is empty, try environment variables
         if (string.IsNullOrEmpty(connectionString))
         {
-            var securityLogsConnection = Environment.GetEnvironmentVariable("SECURITY_LOGS_CONNECTION_STRING");
+            var securityLogsConnection = Environment.GetEnvironmentVariable("SIMPLE_IDENTITY_SERVER_SECURITY_LOGS_CONNECTION_STRING");
             if (!string.IsNullOrEmpty(securityLogsConnection))
             {
                 connectionString = securityLogsConnection;

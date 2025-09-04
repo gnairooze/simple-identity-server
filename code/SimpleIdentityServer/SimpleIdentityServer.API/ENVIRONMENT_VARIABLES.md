@@ -5,23 +5,23 @@ This document describes the environment variables required for secure operation 
 ## Required Environment Variables (Production)
 
 ### Database Connections
-- `DEFAULT_CONNECTION_STRING`: Main database connection string
+- `SIMPLE_IDENTITY_SERVER_DEFAULT_CONNECTION_STRING`: Main database connection string
   - Example: `Server=your-db-server;Database=SimpleIdentityServer;User Id=your-user;Password=your-secure-password;TrustServerCertificate=true;Encrypt=true;MultipleActiveResultSets=true`
   
-- `SECURITY_LOGS_CONNECTION_STRING`: Security logs database connection string
+- `SIMPLE_IDENTITY_SERVER_SECURITY_LOGS_CONNECTION_STRING`: Security logs database connection string
   - Example: `Server=your-db-server;Database=SimpleIdentityServerSecurityLogs;User Id=your-user;Password=your-secure-password;TrustServerCertificate=true;Encrypt=true;MultipleActiveResultSets=true`
 
 ### CORS Configuration
-- `CORS_ALLOWED_ORIGINS`: Semicolon-separated list of allowed origins
+- `SIMPLE_IDENTITY_SERVER_CORS_ALLOWED_ORIGINS`: Semicolon-separated list of allowed origins
   - Example: `https://yourdomain.com;https://app.yourdomain.com`
 
 ## Optional Environment Variables
 
 ### Certificate Management
-- `CERT_PASSWORD`: Password for certificate files (default: "DefaultPassword123!")
+- `SIMPLE_IDENTITY_SERVER_CERT_PASSWORD`: Password for certificate files (default: "DefaultPassword123!")
 
 ### Node Identification
-- `NODE_NAME`: Identifier for this server instance in load-balanced scenarios (default: machine name)
+- `SIMPLE_IDENTITY_SERVER_NODE_NAME`: Identifier for this server instance in load-balanced scenarios (default: machine name)
 
 ### ASP.NET Core Configuration
 - `ASPNETCORE_ENVIRONMENT`: Environment name (Development, Staging, Production)
@@ -58,8 +58,8 @@ Example Docker Compose:
 services:
   identity-server:
     environment:
-      - DEFAULT_CONNECTION_STRING=Server=sqlserver;Database=SimpleIdentityServer;User Id=sa;Password=${DB_PASSWORD};TrustServerCertificate=true;Encrypt=true
-      - SECURITY_LOGS_CONNECTION_STRING=Server=sqlserver;Database=SimpleIdentityServerSecurityLogs;User Id=sa;Password=${DB_PASSWORD};TrustServerCertificate=true;Encrypt=true
-      - CORS_ALLOWED_ORIGINS=https://myapp.com
+      - SIMPLE_IDENTITY_SERVER_DEFAULT_CONNECTION_STRING=Server=sqlserver;Database=SimpleIdentityServer;User Id=sa;Password=${SIMPLE_IDENTITY_SERVER_DB_PASSWORD};TrustServerCertificate=true;Encrypt=true
+      - SIMPLE_IDENTITY_SERVER_SECURITY_LOGS_CONNECTION_STRING=Server=sqlserver;Database=SimpleIdentityServerSecurityLogs;User Id=sa;Password=${SIMPLE_IDENTITY_SERVER_DB_PASSWORD};TrustServerCertificate=true;Encrypt=true
+      - SIMPLE_IDENTITY_SERVER_CORS_ALLOWED_ORIGINS=https://myapp.com
       - ASPNETCORE_ENVIRONMENT=Production
 ```
