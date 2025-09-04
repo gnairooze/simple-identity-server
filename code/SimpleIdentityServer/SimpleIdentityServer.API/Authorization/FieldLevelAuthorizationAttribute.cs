@@ -45,7 +45,7 @@ public class FieldLevelAuthorizationAttribute : ActionFilterAttribute
         };
     }
 
-    private object FilterSingleItem(object item, List<string> userScopes, List<string> userRoles, string? clientId)
+    private object? FilterSingleItem(object? item, List<string> userScopes, List<string> userRoles, string? clientId)
     {
         if (item == null) return item;
 

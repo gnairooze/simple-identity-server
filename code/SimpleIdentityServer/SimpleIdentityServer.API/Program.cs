@@ -1,10 +1,6 @@
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.AspNetCore.Server.IIS;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
-using OpenIddict.Abstractions;
-using OpenIddict.EntityFrameworkCore.Models;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.MSSqlServer;
@@ -534,7 +530,6 @@ static void ConfigureSerilog(WebApplicationBuilder builder)
                 BatchPostingLimit = GetSecurityLoggingBatchLimit(builder),
                 BatchPeriod = TimeSpan.FromSeconds(GetSecurityLoggingBatchPeriod(builder))
             },
-        tion,
             columnOptions: columnOptions);
     }
     else
@@ -580,7 +575,7 @@ static void StartLogCleanupService(WebApplication app)
                 await connection.OpenAsync();
                 
                 // Delete logs older than configured retention period
-                var retentionDays = GetSecurityLoggingRetentionDays(builder);
+                var retentionDays = app.Configuration.GetValue<int>("Application:SecurityLogging:RetentionDays", 30);
                 var deleteCommand = $@"
                     DELETE FROM SecurityLogs 
                     WHERE TimeStamp < DATEADD(day, -{retentionDays}, GETUTCDATE())";
@@ -599,7 +594,7 @@ static void StartLogCleanupService(WebApplication app)
             }
             
             // Run cleanup every 24 hours
-            var cleanupInterval = builder.Configuration.GetValue<int>("Application:SecurityLogging:CleanupIntervalHours", 24);
+            var cleanupInterval = app.Configuration.GetValue<int>("Application:SecurityLogging:CleanupIntervalHours", 24);
             await Task.Delay(TimeSpan.FromHours(cleanupInterval), app.Lifetime.ApplicationStopping);
         }
     });
@@ -785,8 +780,3 @@ static int GetSecurityLoggingBatchPeriod(WebApplicationBuilder builder)
 {
     return builder.Configuration.GetValue<int>("Application:SecurityLogging:BatchPeriodSeconds", 10);
 }
-
-static int GetSecurityLoggingRetentionDays(WebApplicationBuilder builder)
-{
-    return builder.Configuration.GetValue<int>("Application:SecurityLogging:RetentionDays", 30);
-} 

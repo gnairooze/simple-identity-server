@@ -105,7 +105,7 @@ public class ResponseFilteringMiddleware
         return FilterJsonElement(jsonDocument.RootElement, userRoles, clientId);
     }
 
-    private object FilterJsonElement(JsonElement element, List<string> userRoles, string? clientId)
+    private object? FilterJsonElement(JsonElement element, List<string> userRoles, string? clientId)
     {
         return element.ValueKind switch
         {

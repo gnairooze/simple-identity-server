@@ -143,7 +143,7 @@ public class DebugLoggingMiddleware
             }
             else
             {
-                headers[header.Key] = header.Value.ToArray() ?? Array.Empty<string>();
+                headers[header.Key] = header.Value.ToArray();
             }
         }
         
@@ -163,7 +163,7 @@ public class DebugLoggingMiddleware
             }
             else
             {
-                headers[header.Key] = header.Value.ToArray() ?? Array.Empty<string>();
+                headers[header.Key] = header.Value.ToArray();
             }
         }
         
