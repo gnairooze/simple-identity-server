@@ -142,12 +142,10 @@ public static class ServiceConfiguration
                        .EnableTokenEndpointPassthrough();
 
                 // Configure the JWT handler
-                options.UseAspNetCore()
-                       .DisableTransportSecurityRequirement();
+                options.UseAspNetCore();
 
                 // Configure token lifetimes from configuration
-                options.DisableAccessTokenEncryption()
-                       .SetAccessTokenLifetime(TimeSpan.FromMinutes(openIddictOptions.AccessTokenLifetimeMinutes))
+                options.SetAccessTokenLifetime(TimeSpan.FromMinutes(openIddictOptions.AccessTokenLifetimeMinutes))
                        .SetRefreshTokenLifetime(TimeSpan.FromDays(openIddictOptions.RefreshTokenLifetimeDays));
             })
             .AddValidation(options =>

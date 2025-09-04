@@ -1,6 +1,4 @@
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 using OpenIddict.Validation.AspNetCore;
 using OpenIddict.Validation.ServerIntegration;
 using OpenIddict.Validation.SystemNetHttp;
@@ -15,33 +13,17 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Configure JWT Authentication
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.Authority = builder.Configuration["IdentityServer:Authority"];
-        options.Audience = builder.Configuration["IdentityServer:Audience"];
-        options.RequireHttpsMetadata = false; // Set to true in production
-        
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["IdentityServer:Authority"],
-            ValidAudience = builder.Configuration["IdentityServer:Audience"]
-        };
-    });
+// Configure authentication to use OpenIddict validation
+builder.Services.AddAuthentication(OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme);
 
-// Configure OpenIddict Validation (for introspection)
+// Configure OpenIddict Validation with introspection (required for encrypted tokens)
 builder.Services.AddOpenIddict()
     .AddValidation(options =>
     {
         options.SetIssuer(builder.Configuration["IdentityServer:Authority"]!);
         options.AddAudiences(builder.Configuration["IdentityServer:Audience"]!);
         
-        // Configure the validation handler to use introspection
+        // Configure the validation handler to use introspection for encrypted tokens
         options.UseIntrospection()
                .SetClientId(builder.Configuration["IdentityServer:ClientId"]!)
                .SetClientSecret(builder.Configuration["IdentityServer:ClientSecret"]!);
