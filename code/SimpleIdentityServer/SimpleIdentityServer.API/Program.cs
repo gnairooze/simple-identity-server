@@ -4,8 +4,8 @@ using SimpleIdentityServer.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure secure connection strings from environment variables
-ApplicationConfiguration.ConfigureSecureConnectionStrings(builder);
+// Configure secure environment settings (connection strings, certificate passwords, etc.)
+ApplicationConfiguration.ConfigureSecureEnvironmentSettings(builder);
 
 // Validate all configuration early in the startup process
 ApplicationConfiguration.ValidateConfiguration(builder);

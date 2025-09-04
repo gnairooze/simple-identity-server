@@ -6,7 +6,7 @@ namespace SimpleIdentityServer.API.Configuration;
 
 public static class ApplicationConfiguration
 {
-    public static void ConfigureSecureConnectionStrings(WebApplicationBuilder builder)
+    public static void ConfigureSecureEnvironmentSettings(WebApplicationBuilder builder)
     {
         // Get connection strings from environment variables
         var defaultConnection = Environment.GetEnvironmentVariable("DEFAULT_CONNECTION_STRING");
@@ -40,6 +40,17 @@ public static class ApplicationConfiguration
         else
         {
             throw new InvalidOperationException("SECURITY_LOGS_CONNECTION_STRING environment variable is required in production");
+        }
+
+        // Configure certificate password from environment variable
+        var certPassword = Environment.GetEnvironmentVariable("CERT_PASSWORD");
+        if (!string.IsNullOrEmpty(certPassword))
+        {
+            builder.Configuration["Application:Certificates:Password"] = certPassword;
+        }
+        else
+        {
+            throw new InvalidOperationException("CERT_PASSWORD environment variable is required in production");
         }
     }
 
