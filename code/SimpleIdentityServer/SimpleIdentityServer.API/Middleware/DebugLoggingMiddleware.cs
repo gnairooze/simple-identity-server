@@ -464,10 +464,14 @@ public class DebugLoggingMiddleware
         // Mask common patterns for tokens and passwords in text content
         var patterns = new[]
         {
+            // Token parameter in form data (highest priority - must come first)
+            (@"token=[^&\s]*", "token=[MASKED]"),
             // Bearer tokens
             (@"Bearer\s+[A-Za-z0-9\-._~+/]+=*", "Bearer [MASKED]"),
             // JWT tokens (basic pattern)
             (@"eyJ[A-Za-z0-9\-._~+/]*\.eyJ[A-Za-z0-9\-._~+/]*\.[A-Za-z0-9\-._~+/]*", "[MASKED_JWT]"),
+            // Encrypted tokens (OpenIddict format) - sequences with dots, hyphens, underscores
+            (@"[A-Za-z0-9\-._~+/]{50,}", "[MASKED_TOKEN]"),
             // API keys (basic pattern - sequences of 20+ alphanumeric characters)
             (@"\b[A-Za-z0-9]{20,}\b", "[MASKED_KEY]"),
             // Password patterns in form data
