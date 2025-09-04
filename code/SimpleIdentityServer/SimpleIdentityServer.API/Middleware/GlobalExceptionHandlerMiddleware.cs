@@ -69,14 +69,9 @@ public static class GlobalExceptionHandler
             RequestId = requestId,
             ErrorCode = errorCode,
             Message = userMessage,
-            Timestamp = DateTime.UtcNow
+            Timestamp = DateTime.UtcNow,
+            Details = exception.ToString()
         };
-
-        // Include stack trace only in development environment
-        if (environment.IsDevelopment())
-        {
-            errorResponse.Details = exception.ToString();
-        }
 
         var jsonResponse = JsonSerializer.Serialize(errorResponse, new JsonSerializerOptions
         {
