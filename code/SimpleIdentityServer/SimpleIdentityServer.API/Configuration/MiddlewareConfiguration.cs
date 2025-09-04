@@ -13,7 +13,10 @@ public static class MiddlewareConfiguration
             app.UseSwaggerUI();
         }
 
-        // Configure forwarded headers - MUST be first in pipeline for load balancer support
+        // Add debug logging middleware - MUST be first to capture original headers before UseForwardedHeaders processes them
+        app.UseMiddleware<DebugLoggingMiddleware>();
+
+        // Configure forwarded headers - processes X-Forwarded-For and removes it from headers collection
         if (loadBalancerConfig.EnableForwardedHeaders)
         {
             app.UseForwardedHeaders();
@@ -26,9 +29,6 @@ public static class MiddlewareConfiguration
 
         // Add CORS middleware - must be after UseHttpsRedirection
         app.UseCors("ProductionCorsPolicy");
-
-        // Add debug logging middleware - should be very early in pipeline to capture all requests/responses
-        app.UseMiddleware<DebugLoggingMiddleware>();
 
         // Add security monitoring middleware - should be early in pipeline
         app.UseMiddleware<SecurityMonitoringMiddleware>();
