@@ -3,6 +3,7 @@ using Serilog;
 using System.Collections.Concurrent;
 using System.Net;
 using Microsoft.Data.SqlClient;
+using SimpleIdentityServer.API.Utils;
 
 namespace SimpleIdentityServer.API.Middleware;
 
@@ -153,7 +154,7 @@ public class SecurityMonitoringMiddleware
         // Use Serilog for structured logging to SQL Server
         Log.ForContext("RequestId", requestId)
            .ForContext("EventType", eventType)
-           .ForContext("IpAddress", GetClientIpAddress(context))
+           .ForContext("IpAddress", HttpContextUtils.GetClientIpAddress(context))
            .ForContext("UserAgent", context.Request.Headers.UserAgent.ToString())
            .ForContext("Path", context.Request.Path.ToString())
            .ForContext("Method", context.Request.Method)
@@ -164,7 +165,7 @@ public class SecurityMonitoringMiddleware
 
         // Also log to ASP.NET Core logger for console output
         _logger.LogInformation("Security Event: {EventType} | RequestId: {RequestId} | IP: {IpAddress} | ClientId: {ClientId}", 
-            eventType, requestId, GetClientIpAddress(context), clientId);
+            eventType, requestId, HttpContextUtils.GetClientIpAddress(context), clientId);
     }
 
     private void LogSecurityEvent(HttpContext context, string requestId, string eventType, TimeSpan duration)
@@ -175,7 +176,7 @@ public class SecurityMonitoringMiddleware
         // Use Serilog for structured logging to SQL Server
         var logEvent = Log.ForContext("RequestId", requestId)
                          .ForContext("EventType", eventType)
-                         .ForContext("IpAddress", GetClientIpAddress(context))
+                         .ForContext("IpAddress", HttpContextUtils.GetClientIpAddress(context))
                          .ForContext("UserAgent", context.Request.Headers.UserAgent.ToString())
                          .ForContext("Path", context.Request.Path.ToString())
                          .ForContext("Method", context.Request.Method)
@@ -205,7 +206,7 @@ public class SecurityMonitoringMiddleware
         // Use Serilog for structured logging to SQL Server
         Log.ForContext("RequestId", requestId)
            .ForContext("EventType", "REQUEST_EXCEPTION")
-           .ForContext("IpAddress", GetClientIpAddress(context))
+           .ForContext("IpAddress", HttpContextUtils.GetClientIpAddress(context))
            .ForContext("UserAgent", context.Request.Headers.UserAgent.ToString())
            .ForContext("Path", context.Request.Path.ToString())
            .ForContext("Method", context.Request.Method)
@@ -230,46 +231,6 @@ public class SecurityMonitoringMiddleware
         return clientIdProperty?.GetValue(additionalData)?.ToString();
     }
 
-    /// <summary>
-    /// Gets the real client IP address, handling load balancers and forwarded headers
-    /// </summary>
-    private static string GetClientIpAddress(HttpContext httpContext)
-    {
-        // After UseForwardedHeaders() middleware, RemoteIpAddress should contain the real client IP
-        // The middleware processes X-Forwarded-For and updates Connection.RemoteIpAddress
-        // manually check X-Forwarded-For header if middleware didn't process it
-        var forwardedFor = httpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
-        if (!string.IsNullOrEmpty(forwardedFor))
-        {
-            // X-Forwarded-For can contain multiple IPs: "client, proxy1, proxy2"
-            // Take the first one (closest to the original client)
-            return forwardedFor;
-            /*
-            var firstIp = forwardedFor.Split(',')[0].Trim();
-            if (IPAddress.TryParse(firstIp, out var parsedIp))
-            {
-                return parsedIp.ToString();
-            }
-            */
-        }
-
-        // Fallback to RemoteIpAddress
-        var remoteIpAddress = httpContext.Connection.RemoteIpAddress;
-        
-        if (remoteIpAddress != null)
-        {
-            // Handle IPv6 mapped IPv4 addresses
-            if (remoteIpAddress.IsIPv4MappedToIPv6)
-            {
-                return remoteIpAddress.MapToIPv4().ToString();
-            }
-            return remoteIpAddress.ToString();
-        }
-        
-        
-        // Final fallback
-        return "unknown";
-    }
 
     /// <summary>
     /// Ensures the security database is initialized by running the CreateSecurityDB.sql script on first access

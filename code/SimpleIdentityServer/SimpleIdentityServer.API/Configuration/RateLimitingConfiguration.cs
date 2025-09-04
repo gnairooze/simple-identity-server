@@ -1,5 +1,6 @@
 using System.Net;
 using System.Threading.RateLimiting;
+using SimpleIdentityServer.API.Utils;
 
 namespace SimpleIdentityServer.API.Configuration;
 
@@ -90,42 +91,10 @@ public static class RateLimitingConfiguration
         }
 
         // Fall back to IP address with proper forwarded header support
-        var ipAddress = GetClientIpAddress(httpContext);
+        var ipAddress = HttpContextUtils.GetClientIpAddress(httpContext);
         return $"ip:{ipAddress}";
     }
 
-    private static string GetClientIpAddress(HttpContext httpContext)
-    {
-        // After UseForwardedHeaders() middleware, RemoteIpAddress should contain the real client IP
-        // The middleware processes X-Forwarded-For and updates Connection.RemoteIpAddress
-        var remoteIpAddress = httpContext.Connection.RemoteIpAddress;
-        
-        if (remoteIpAddress != null)
-        {
-            // Handle IPv6 mapped IPv4 addresses
-            if (remoteIpAddress.IsIPv4MappedToIPv6)
-            {
-                return remoteIpAddress.MapToIPv4().ToString();
-            }
-            return remoteIpAddress.ToString();
-        }
-        
-        // Fallback: manually check X-Forwarded-For header if middleware didn't process it
-        var forwardedFor = httpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
-        if (!string.IsNullOrEmpty(forwardedFor))
-        {
-            // X-Forwarded-For can contain multiple IPs: "client, proxy1, proxy2"
-            // Take the first one (closest to the original client)
-            var firstIp = forwardedFor.Split(',')[0].Trim();
-            if (IPAddress.TryParse(firstIp, out var parsedIp))
-            {
-                return parsedIp.ToString();
-            }
-        }
-        
-        // Final fallback
-        return "unknown";
-    }
 
     private static string? GetClientIdFromRequest(HttpContext httpContext)
     {
