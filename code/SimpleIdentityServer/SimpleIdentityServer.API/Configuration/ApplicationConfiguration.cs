@@ -14,12 +14,12 @@ public static class ApplicationConfiguration
         
         if (!string.IsNullOrEmpty(defaultConnection))
         {
-            builder.Configuration["ConnectionStrings:DefaultConnection"] = defaultConnection;
+            builder.Configuration[AppSettingsNames.ConnectionStringsDefaultConnection] = defaultConnection;
         }
         else if (builder.Environment.IsDevelopment())
         {
             // Fallback for development - use local development database
-            builder.Configuration["ConnectionStrings:DefaultConnection"] = 
+            builder.Configuration[AppSettingsNames.ConnectionStringsDefaultConnection] = 
                 "Server=localhost;Database=SimpleIdentityServer_Dev;Integrated Security=true;TrustServerCertificate=true;MultipleActiveResultSets=true";
         }
         else
@@ -29,12 +29,12 @@ public static class ApplicationConfiguration
         
         if (!string.IsNullOrEmpty(securityLogsConnection))
         {
-            builder.Configuration["ConnectionStrings:SecurityLogsConnection"] = securityLogsConnection;
+            builder.Configuration[AppSettingsNames.ConnectionStringsSecurityLogsConnection] = securityLogsConnection;
         }
         else if (builder.Environment.IsDevelopment())
         {
             // Fallback for development - use local development database
-            builder.Configuration["ConnectionStrings:SecurityLogsConnection"] = 
+            builder.Configuration[AppSettingsNames.ConnectionStringsSecurityLogsConnection] = 
                 "Server=localhost;Database=SimpleIdentityServer_SecurityLogs_Dev;Integrated Security=true;TrustServerCertificate=true;MultipleActiveResultSets=true";
         }
         else
@@ -46,7 +46,7 @@ public static class ApplicationConfiguration
         var certPassword = Environment.GetEnvironmentVariable(EnvironmentVariablesNames.CertificatePassword);
         if (!string.IsNullOrEmpty(certPassword))
         {
-            builder.Configuration["Application:Certificates:Password"] = certPassword;
+            builder.Configuration[AppSettingsNames.ApplicationCertificatesPassword] = certPassword;
         }
         else
         {
@@ -95,14 +95,14 @@ public static class ApplicationConfiguration
                 else
                 {
                     // In development, use origins from configuration
-                    var developmentOptions = builder.Configuration.GetSection("Application:Development").Get<DevelopmentOptions>();
+                    var developmentOptions = builder.Configuration.GetSection(AppSettingsNames.ApplicationDevelopment).Get<DevelopmentOptions>();
                     if (developmentOptions?.CorsOrigins?.Length > 0)
                     {
                         policy.WithOrigins(developmentOptions.CorsOrigins);
                     }
                     else
                     {
-                        throw new InvalidOperationException("Application:Development:CorsOrigins configuration is required in development");
+                        throw new InvalidOperationException($"{AppSettingsNames.ApplicationDevelopmentCorsOrigins} configuration is required in development");
                     }
                 }
                 

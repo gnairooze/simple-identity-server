@@ -101,7 +101,7 @@ public static class SecurityLoggingConfiguration
                     await connection.OpenAsync();
                     
                     // Delete logs older than configured retention period
-                    var retentionDays = app.Configuration.GetValue<int>("Application:SecurityLogging:RetentionDays", 30);
+                    var retentionDays = app.Configuration.GetValue<int>(AppSettingsNames.ApplicationSecurityLoggingRetentionDays, 30);
                     var deleteCommand = $@"
                         DELETE FROM SecurityLogs 
                         WHERE TimeStamp < DATEADD(day, -{retentionDays}, GETUTCDATE())";
@@ -120,7 +120,7 @@ public static class SecurityLoggingConfiguration
                 }
                 
                 // Run cleanup every 24 hours
-                var cleanupInterval = app.Configuration.GetValue<int>("Application:SecurityLogging:CleanupIntervalHours", 24);
+                var cleanupInterval = app.Configuration.GetValue<int>(AppSettingsNames.ApplicationSecurityLoggingCleanupIntervalHours, 24);
                 await Task.Delay(TimeSpan.FromHours(cleanupInterval), app.Lifetime.ApplicationStopping);
             }
         });
@@ -133,7 +133,7 @@ public static class SecurityLoggingConfiguration
 
     private static string? GetSecurityLogsConnectionString(IConfiguration configuration, IWebHostEnvironment environment)
     {
-        var connectionString = configuration.GetConnectionString("SecurityLogsConnection");
+        var connectionString = configuration.GetConnectionString(AppSettingsNames.SecurityLogsConnection);
         
         // If connection string is empty, try environment variables
         if (string.IsNullOrEmpty(connectionString))
@@ -160,11 +160,11 @@ public static class SecurityLoggingConfiguration
 
     private static int GetSecurityLoggingBatchLimit(WebApplicationBuilder builder)
     {
-        return builder.Configuration.GetValue<int>("Application:SecurityLogging:BatchPostingLimit", 50);
+        return builder.Configuration.GetValue<int>(AppSettingsNames.ApplicationSecurityLoggingBatchPostingLimit, 50);
     }
 
     private static int GetSecurityLoggingBatchPeriod(WebApplicationBuilder builder)
     {
-        return builder.Configuration.GetValue<int>("Application:SecurityLogging:BatchPeriodSeconds", 10);
+        return builder.Configuration.GetValue<int>(AppSettingsNames.ApplicationSecurityLoggingBatchPeriodSeconds, 10);
     }
 }

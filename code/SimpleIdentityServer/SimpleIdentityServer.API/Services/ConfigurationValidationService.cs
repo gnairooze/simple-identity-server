@@ -56,8 +56,8 @@ public class ConfigurationValidationService
 
     private void ValidateConnectionStrings()
     {
-        var defaultConnection = _configuration.GetConnectionString("DefaultConnection");
-        var securityLogsConnection = _configuration.GetConnectionString("SecurityLogsConnection");
+        var defaultConnection = _configuration.GetConnectionString(AppSettingsNames.DefaultConnection);
+        var securityLogsConnection = _configuration.GetConnectionString(AppSettingsNames.SecurityLogsConnection);
 
         if (string.IsNullOrWhiteSpace(defaultConnection))
         {
@@ -208,10 +208,10 @@ public class ConfigurationValidationService
 
     private void ValidateRateLimitingSettings()
     {
-        var rateLimitingSection = _configuration.GetSection("RateLimiting");
+        var rateLimitingSection = _configuration.GetSection(AppSettingsNames.RateLimiting);
         if (!rateLimitingSection.Exists())
         {
-            _validationErrors.Add("Configuration section 'RateLimiting' is required in appsettings.json");
+            _validationErrors.Add($"Configuration section '{AppSettingsNames.RateLimiting}' is required in appsettings.json");
             return;
         }
 
@@ -229,10 +229,10 @@ public class ConfigurationValidationService
 
     private void ValidateLoadBalancerSettings()
     {
-        var loadBalancerSection = _configuration.GetSection("LoadBalancer");
+        var loadBalancerSection = _configuration.GetSection(AppSettingsNames.LoadBalancer);
         if (!loadBalancerSection.Exists())
         {
-            _validationErrors.Add("Configuration section 'LoadBalancer' is required in appsettings.json");
+            _validationErrors.Add($"Configuration section '{AppSettingsNames.LoadBalancer}' is required in appsettings.json");
             return;
         }
 
@@ -240,7 +240,7 @@ public class ConfigurationValidationService
         var enableForwardedHeaders = loadBalancerSection.GetValue<bool?>("EnableForwardedHeaders");
         if (!enableForwardedHeaders.HasValue)
         {
-            _validationErrors.Add("LoadBalancer:EnableForwardedHeaders setting is required in appsettings.json");
+            _validationErrors.Add($"{AppSettingsNames.LoadBalancerEnableForwardedHeaders} setting is required in appsettings.json");
         }
     }
 

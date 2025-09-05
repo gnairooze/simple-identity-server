@@ -254,7 +254,7 @@ public class SecurityMonitoringMiddleware
                     _logger.LogInformation("Initializing security database on first access...");
                     
                     // Get the connection string for SecurityLogsConnection
-                    var connectionString = _configuration.GetConnectionString("SecurityLogsConnection");
+                    var connectionString = _configuration.GetConnectionString(AppSettingsNames.SecurityLogsConnection);
                     if (string.IsNullOrEmpty(connectionString))
                     {
                         _logger.LogError("SecurityLogsConnection string not found in configuration");

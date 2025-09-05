@@ -53,7 +53,7 @@ public static class ServiceConfiguration
 
     private static void ConfigureKestrel(WebApplicationBuilder builder)
     {
-        var kestrelOptions = builder.Configuration.GetSection("Kestrel").Get<KestrelOptions>();
+        var kestrelOptions = builder.Configuration.GetSection(AppSettingsNames.Kestrel).Get<KestrelOptions>();
         if (kestrelOptions == null)
         {
             throw new InvalidOperationException("Kestrel configuration section is required");
@@ -71,15 +71,15 @@ public static class ServiceConfiguration
 
     private static void ConfigureDatabase(WebApplicationBuilder builder)
     {
-        var databaseOptions = builder.Configuration.GetSection("Application:Database").Get<DatabaseOptions>();
+        var databaseOptions = builder.Configuration.GetSection(AppSettingsNames.ApplicationDatabase).Get<DatabaseOptions>();
         if (databaseOptions == null)
         {
-            throw new InvalidOperationException("Application:Database configuration section is required");
+            throw new InvalidOperationException($"{AppSettingsNames.ApplicationDatabase} configuration section is required");
         }
 
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
         {
-            options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"), sqlOptions =>
+            options.UseSqlServer(builder.Configuration.GetConnectionString(AppSettingsNames.DefaultConnection), sqlOptions =>
             {
                 sqlOptions.CommandTimeout(databaseOptions.CommandTimeoutSeconds);
                 sqlOptions.EnableRetryOnFailure(
@@ -95,16 +95,16 @@ public static class ServiceConfiguration
 
     private static void ConfigureOpenIddict(WebApplicationBuilder builder)
     {
-        var openIddictOptions = builder.Configuration.GetSection("Application:OpenIddict").Get<OpenIddictOptions>();
+        var openIddictOptions = builder.Configuration.GetSection(AppSettingsNames.ApplicationOpenIddict).Get<OpenIddictOptions>();
         if (openIddictOptions == null)
         {
-            throw new InvalidOperationException("Application:OpenIddict configuration section is required");
+            throw new InvalidOperationException($"{AppSettingsNames.ApplicationOpenIddict} configuration section is required");
         }
 
-        var certificateOptions = builder.Configuration.GetSection("Application:Certificates").Get<CertificateOptions>();
+        var certificateOptions = builder.Configuration.GetSection(AppSettingsNames.ApplicationCertificates).Get<CertificateOptions>();
         if (certificateOptions == null)
         {
-            throw new InvalidOperationException("Application:Certificates configuration section is required");
+            throw new InvalidOperationException($"{AppSettingsNames.ApplicationCertificates} configuration section is required");
         }
 
         builder.Services.AddOpenIddict()
