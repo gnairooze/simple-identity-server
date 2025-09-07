@@ -1,0 +1,315 @@
+{
+	"info": {
+		"_postman_id": "db4a7660-ec13-4ce2-a53a-451301e5f0a5",
+		"name": "SimpleIdentityServer",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "6481470",
+		"_collection_link": "https://lively-trinity-995999.postman.co/workspace/LearnWebLocal~ca53f372-52d1-4ab9-8806-b68a9d2a4592/collection/6481470-db4a7660-ec13-4ce2-a53a-451301e5f0a5?action=share&source=collection_link&creator=6481470"
+	},
+	"item": [
+		{
+			"name": "get-token",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded",
+						"type": "text"
+					},
+					{
+						"key": "x-forwarded-for",
+						"value": "3.3.3.3",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "grant_type",
+							"value": "client_credentials",
+							"type": "text"
+						},
+						{
+							"key": "client_id",
+							"value": "service-api",
+							"type": "text"
+						},
+						{
+							"key": "client_secret",
+							"value": "supersecret",
+							"type": "text"
+						},
+						{
+							"key": "scope",
+							"value": "api1.read",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{baseURL}}/connect/token",
+					"host": [
+						"{{baseURL}}"
+					],
+					"path": [
+						"connect",
+						"token"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "validate-token",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded",
+						"type": "text"
+					},
+					{
+						"key": "X-Forwarded-For",
+						"value": "3.3.3.3",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "grant_type",
+							"value": "client_credentials",
+							"type": "text"
+						},
+						{
+							"key": "client_id",
+							"value": "service-api",
+							"type": "text"
+						},
+						{
+							"key": "client_secret",
+							"value": "supersecret",
+							"type": "text"
+						},
+						{
+							"key": "token",
+							"value": "{{mytoken}}",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{baseURL}}/connect/introspect",
+					"host": [
+						"{{baseURL}}"
+					],
+					"path": [
+						"connect",
+						"introspect"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get-weatherforcast",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{mytoken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:7093/WeatherForecast",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "7093",
+					"path": [
+						"WeatherForecast"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "lb-health",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "grant_type",
+							"value": "client_credentials",
+							"type": "text"
+						},
+						{
+							"key": "client_id",
+							"value": "service-api",
+							"type": "text"
+						},
+						{
+							"key": "client_secret",
+							"value": "supersecret",
+							"type": "text"
+						},
+						{
+							"key": "token",
+							"value": "{{mytoken}}",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{baseURL}}/health",
+					"host": [
+						"{{baseURL}}"
+					],
+					"path": [
+						"health"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "lb-config",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/x-www-form-urlencoded",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "grant_type",
+							"value": "client_credentials",
+							"type": "text"
+						},
+						{
+							"key": "client_id",
+							"value": "service-api",
+							"type": "text"
+						},
+						{
+							"key": "client_secret",
+							"value": "supersecret",
+							"type": "text"
+						},
+						{
+							"key": "token",
+							"value": "{{mytoken}}",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "{{baseURL}}/.well-known/openid-configuration",
+					"host": [
+						"{{baseURL}}"
+					],
+					"path": [
+						".well-known",
+						"openid-configuration"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "lb-jwks",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseURL}}/.well-known/jwks",
+					"host": [
+						"{{baseURL}}"
+					],
+					"path": [
+						".well-known",
+						"jwks"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseURL",
+			"value": "https://localhost:7443"
+		},
+		{
+			"key": "mytoken",
+			"value": "eyJhbGciOiJSUzI1NiIsImtpZCI6Ijc3MzVFRDM4ODNGNTA5OENFMkIyNTJBOTRCNDM3QkJDNzczODBEMTIiLCJ4NXQiOiJkelh0T0lQMUNZemlzbEtwUzBON3ZIYzREUkkiLCJ0eXAiOiJhdCtqd3QifQ.eyJzdWIiOiJzZXJ2aWNlLWFwaSIsIm9pX3Byc3QiOiJzZXJ2aWNlLWFwaSIsImNsaWVudF9pZCI6InNlcnZpY2UtYXBpIiwib2lfdGtuX2lkIjoiYjVmZjRhZTEtODk1OS00OWUxLTgyZjctOTEyNjM3ZWJhYWY2IiwiYXVkIjoiYXBpMSIsInNjb3BlIjoiYXBpMS5yZWFkIiwianRpIjoiNzVkZGE5MjgtN2Y1Mi00YWViLTkzYmUtZWZjYjRkZjdjNWYyIiwiaXNzIjoiaHR0cHM6Ly9sb2NhbGhvc3Q6NzQ0My8iLCJleHAiOjE3NTU2MzE1OTUsImlhdCI6MTc1NTYyNzk5NX0.dwA8iiyvYZN4DHvV5QibtPGZ1cb6I9E97N_Cg_UY6Pu6c1nCwy5osKIJ6jdLH98UvXFhLK0gnHQ5NpRYtavICBvb0iCnpPu1Xh6P2P8mDlSrvBSFdZtM32OspBSHPj4DulmC_NRI11ys2euhYSdQ2V5GZY6Xh19QC7bwSFB2bIYSn8too0mDPJ974DAhJQFr6TLYWBZzwfiZDrH7-76HpZp6kL9aEaKy4YzBXl2jyn4LNBztzA7_161ekzlHL_FrssPO9Vl2smynwQpbtFR6fVdT_emITcuB5Bi1UvL5Hk5c-uHP2vdRgeuJAFgJRCe7PsdHgxwNoTv3Uo3sUtmp0Q"
+		}
+	]
+}
