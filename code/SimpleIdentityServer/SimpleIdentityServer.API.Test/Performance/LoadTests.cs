@@ -44,7 +44,7 @@ public class LoadTests : TestBase
         var failedResponses = results.Where(r => !r.Response.IsSuccessStatusCode).ToList();
 
         // At least 90% of requests should succeed
-        successfulResponses.Count.Should().BeGreaterOrEqualTo((int)(concurrentRequests * 0.9),
+        successfulResponses.Count.Should().BeGreaterThanOrEqualTo((int)(concurrentRequests * 0.9),
             $"Expected at least 90% success rate, but got {successfulResponses.Count}/{concurrentRequests}");
 
         // Average response time should be reasonable
@@ -108,7 +108,7 @@ public class LoadTests : TestBase
         var failedResponses = results.Where(r => !r.Response.IsSuccessStatusCode).ToList();
 
         // At least 90% of requests should succeed
-        successfulResponses.Count.Should().BeGreaterOrEqualTo((int)(concurrentRequests * 0.9),
+        successfulResponses.Count.Should().BeGreaterThanOrEqualTo((int)(concurrentRequests * 0.9),
             $"Expected at least 90% success rate, but got {successfulResponses.Count}/{concurrentRequests}");
 
         // Average response time should be reasonable

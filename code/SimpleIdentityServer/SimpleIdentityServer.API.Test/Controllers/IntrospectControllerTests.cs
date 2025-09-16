@@ -39,7 +39,7 @@ public class IntrospectControllerTests : TestBase
         introspectionResponse.Should().NotBeNull();
         introspectionResponse!.Active.Should().BeTrue();
         introspectionResponse.Exp.Should().BeGreaterThan(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
-        introspectionResponse.Iat.Should().BeLessOrEqualTo(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+        introspectionResponse.Iat.Should().BeLessThanOrEqualTo(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
     }
 
     [Fact]
