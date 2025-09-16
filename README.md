@@ -6,8 +6,8 @@ A secure, production-ready OpenID Connect identity provider built with ASP.NET C
 
 - [Technology Stack](#technology-stack)
 - [Building the Project](#building-the-project)
-- [Local Development Setup](#local-development-setup)
 - [Docker Container Deployment](#docker-container-deployment)
+- [Local Development Setup](#local-development-setup)
 - [Securing Resource.API](#securing-resourceapi)
 - [Managing Configuration with CLI](#managing-configuration-with-cli)
 - [Security Logging and Investigation](#security-logging-and-investigation)
@@ -86,108 +86,6 @@ dotnet build --configuration Debug
 # Release build  
 dotnet build --configuration Release
 ```
-
-## Local Development Setup
-
-### 1. Database Setup
-
-**Option A: SQL Server LocalDB (Recommended for development)**
-
-```bash
-# LocalDB is included with Visual Studio
-# Connection string will be: Server=(localdb)\MSSQLLocalDB;Database=SimpleIdentityServer_Dev;...
-```
-
-**Option B: SQL Server Express**
-
-1. Download and install SQL Server Express
-2. Update connection strings in `appsettings.json`
-
-### 2. Certificate Setup
-
-For HTTPS development, you'll need certificates:
-
-**Custom Certificates**
-
-1. Create certificates directory:
-   ```bash
-   mkdir -p code/SimpleIdentityServer/SimpleIdentityServer.API/certs
-   ```
-
-2. Generate certificates (example using OpenSSL):
-   ```bash
-   # Generate private key
-   openssl genrsa -out identity-dev-test.key 2048
-   
-   # Generate certificate
-   openssl req -new -x509 -key identity-dev-test.key -out identity-dev-test.crt -days 365
-   
-   # Convert to PFX for .NET (if needed)
-   openssl pkcs12 -export -out signing.pfx -inkey identity-dev-test.key -in identity-dev-test.crt
-   ```
-
-### 3. Environment Variables
-
-Create a local environment configuration:
-
-**For Development:**
-
-Set these environment variables or update `appsettings.json`:
-
-```bash
-# Database
-SIMPLE_IDENTITY_SERVER_DB_PASSWORD=YourLocalPassword123!
-
-# Connection Strings  
-SIMPLE_IDENTITY_SERVER_DEFAULT_CONNECTION_STRING=Server=(localdb)\MSSQLLocalDB;Database=SimpleIdentityServer_Dev;Integrated Security=true;TrustServerCertificate=true;MultipleActiveResultSets=true
-
-SIMPLE_IDENTITY_SERVER_SECURITY_LOGS_CONNECTION_STRING=Server=(localdb)\MSSQLLocalDB;Database=SimpleIdentityServer_SecurityLogs_Dev;Integrated Security=true;TrustServerCertificate=true;MultipleActiveResultSets=true
-
-# CORS (for local testing)
-SIMPLE_IDENTITY_SERVER_CORS_ALLOWED_ORIGINS=https://localhost:3000;https://localhost:5001;https://localhost:7443
-
-# Certificate (if using custom certificates)
-SIMPLE_IDENTITY_SERVER_CERT_PASSWORD=YourCertPassword123!
-```
-
-**Update appsettings.json for local development:**
-
-```json
-{
-  "Application": {
-    "Development": {
-      "DefaultConnectionString": "Server=(localdb)\\MSSQLLocalDB;Database=SimpleIdentityServer_Dev;Integrated Security=true;TrustServerCertificate=true;MultipleActiveResultSets=true",
-      "SecurityLogsConnectionString": "Server=(localdb)\\MSSQLLocalDB;Database=SimpleIdentityServer_SecurityLogs_Dev;Integrated Security=true;TrustServerCertificate=true;MultipleActiveResultSets=true"
-    }
-  }
-}
-```
-
-### 4. Run the Application
-
-```bash
-cd code/SimpleIdentityServer/SimpleIdentityServer.API
-dotnet run
-```
-
-The application will be available at:
-- HTTPS: `https://localhost:7443`
-- HTTP: `http://localhost:5000` (redirects to HTTPS)
-
-### 5. Verify Installation
-
-1. **Check health endpoint:**
-   ```bash
-   curl -k https://localhost:7443/home/health
-   ```
-
-2. **Check OpenID configuration:**
-   ```bash
-   curl -k https://localhost:7443/.well-known/openid-configuration
-   ```
-
-3. **Access Swagger UI:**
-   Open `https://localhost:7443/swagger` in your browser
 
 ## Docker Container Deployment
 
@@ -310,6 +208,109 @@ To add more API instances:
 
 2. **Update Caddy configuration:**
    Add the new instance to the upstream pool in `caddy/Caddyfile`
+
+
+## Local Development Setup
+
+### 1. Database Setup
+
+**Option A: SQL Server LocalDB (Recommended for development)**
+
+```bash
+# LocalDB is included with Visual Studio
+# Connection string will be: Server=(localdb)\MSSQLLocalDB;Database=SimpleIdentityServer_Dev;...
+```
+
+**Option B: SQL Server Express**
+
+1. Download and install SQL Server Express
+2. Update connection strings in `appsettings.json`
+
+### 2. Certificate Setup
+
+For HTTPS development, you'll need certificates:
+
+**Custom Certificates**
+
+1. Create certificates directory:
+   ```bash
+   mkdir -p code/SimpleIdentityServer/SimpleIdentityServer.API/certs
+   ```
+
+2. Generate certificates (example using OpenSSL):
+   ```bash
+   # Generate private key
+   openssl genrsa -out identity-dev-test.key 2048
+   
+   # Generate certificate
+   openssl req -new -x509 -key identity-dev-test.key -out identity-dev-test.crt -days 365
+   
+   # Convert to PFX for .NET (if needed)
+   openssl pkcs12 -export -out signing.pfx -inkey identity-dev-test.key -in identity-dev-test.crt
+   ```
+
+### 3. Environment Variables
+
+Create a local environment configuration:
+
+**For Development:**
+
+Set these environment variables or update `appsettings.json`:
+
+```bash
+# Database
+SIMPLE_IDENTITY_SERVER_DB_PASSWORD=YourLocalPassword123!
+
+# Connection Strings  
+SIMPLE_IDENTITY_SERVER_DEFAULT_CONNECTION_STRING=Server=(localdb)\MSSQLLocalDB;Database=SimpleIdentityServer_Dev;Integrated Security=true;TrustServerCertificate=true;MultipleActiveResultSets=true
+
+SIMPLE_IDENTITY_SERVER_SECURITY_LOGS_CONNECTION_STRING=Server=(localdb)\MSSQLLocalDB;Database=SimpleIdentityServer_SecurityLogs_Dev;Integrated Security=true;TrustServerCertificate=true;MultipleActiveResultSets=true
+
+# CORS (for local testing)
+SIMPLE_IDENTITY_SERVER_CORS_ALLOWED_ORIGINS=https://localhost:3000;https://localhost:5001;https://localhost:7443
+
+# Certificate (if using custom certificates)
+SIMPLE_IDENTITY_SERVER_CERT_PASSWORD=YourCertPassword123!
+```
+
+**Update appsettings.json for local development:**
+
+```json
+{
+  "Application": {
+    "Development": {
+      "DefaultConnectionString": "Server=(localdb)\\MSSQLLocalDB;Database=SimpleIdentityServer_Dev;Integrated Security=true;TrustServerCertificate=true;MultipleActiveResultSets=true",
+      "SecurityLogsConnectionString": "Server=(localdb)\\MSSQLLocalDB;Database=SimpleIdentityServer_SecurityLogs_Dev;Integrated Security=true;TrustServerCertificate=true;MultipleActiveResultSets=true"
+    }
+  }
+}
+```
+
+### 4. Run the Application
+
+```bash
+cd code/SimpleIdentityServer/SimpleIdentityServer.API
+dotnet run
+```
+
+The application will be available at:
+- HTTPS: `https://localhost:7443`
+- HTTP: `http://localhost:5000` (redirects to HTTPS)
+
+### 5. Verify Installation
+
+1. **Check health endpoint:**
+   ```bash
+   curl -k https://localhost:7443/home/health
+   ```
+
+2. **Check OpenID configuration:**
+   ```bash
+   curl -k https://localhost:7443/.well-known/openid-configuration
+   ```
+
+3. **Access Swagger UI:**
+   Open `https://localhost:7443/swagger` in your browser
 
 ## Securing Resource.API
 
