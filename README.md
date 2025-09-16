@@ -107,14 +107,7 @@ dotnet build --configuration Release
 
 For HTTPS development, you'll need certificates:
 
-**Option A: Development Certificates (Recommended for local development)**
-
-```bash
-# Generate development certificate
-dotnet dev-certs https --trust
-```
-
-**Option B: Custom Certificates**
+**Custom Certificates**
 
 1. Create certificates directory:
    ```bash
