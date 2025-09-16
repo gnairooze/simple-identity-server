@@ -67,7 +67,7 @@ A secure, production-ready OpenID Connect identity provider built with ASP.NET C
    dotnet build SimpleIdentityServer.sln
    ```
 
-4. **Run tests:**
+4. **Run tests:** still under development
    ```bash
    dotnet test
    ```
