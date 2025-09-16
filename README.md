@@ -204,12 +204,16 @@ The application will be available at:
    ```
 
 2. **Update environment variables:**
+   the current production.env file is a working sample file that you can use to update the environment variables. it should work out of the box.
+
    ```bash
    cp environment-variables.example production.env
    # Edit production.env with your secure values
    ```
 
-3. **Generate SSL certificates (for production):**
+4. **Generate SSL certificates (for production):**
+   the current nginx/ssl directory is a working sample directory that you can use to update the ssl certificates. it should work out of the box.
+
    ```bash
    # Create SSL directory
    mkdir -p nginx/ssl
@@ -221,10 +225,18 @@ The application will be available at:
      -subj "/C=US/ST=State/L=City/O=Organization/CN=identity.dev.test"
    ```
 
-4. **Start the containers:**
+6. **build the containers:**
+   ```bash
+   docker-compose build
+   ```
+
+7. **Start the containers:**
    ```bash
    docker-compose up -d
    ```
+
+8. **test the containers:**
+   test the containers by using [this postman collection](docs/SimpleIdentityServer.postman_collection.json)
 
 ### Container Architecture
 
