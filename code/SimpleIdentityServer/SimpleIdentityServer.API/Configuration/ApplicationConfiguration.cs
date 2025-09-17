@@ -16,30 +16,18 @@ public static class ApplicationConfiguration
         {
             builder.Configuration[AppSettingsNames.ConnectionStringsDefaultConnection] = defaultConnection;
         }
-        else if (builder.Environment.IsDevelopment())
-        {
-            // Fallback for development - use local development database
-            builder.Configuration[AppSettingsNames.ConnectionStringsDefaultConnection] = 
-                "Server=localhost;Database=SimpleIdentityServer_Dev;Integrated Security=true;TrustServerCertificate=true;MultipleActiveResultSets=true";
-        }
         else
         {
-            throw new InvalidOperationException($"{EnvironmentVariablesNames.DefaultConnectionString} environment variable is required in production");
+            throw new InvalidOperationException($"{EnvironmentVariablesNames.DefaultConnectionString} environment variable is required");
         }
         
         if (!string.IsNullOrEmpty(securityLogsConnection))
         {
             builder.Configuration[AppSettingsNames.ConnectionStringsSecurityLogsConnection] = securityLogsConnection;
         }
-        else if (builder.Environment.IsDevelopment())
-        {
-            // Fallback for development - use local development database
-            builder.Configuration[AppSettingsNames.ConnectionStringsSecurityLogsConnection] = 
-                "Server=localhost;Database=SimpleIdentityServer_SecurityLogs_Dev;Integrated Security=true;TrustServerCertificate=true;MultipleActiveResultSets=true";
-        }
         else
         {
-            throw new InvalidOperationException($"{EnvironmentVariablesNames.SecurityLogsConnectionString} environment variable is required in production");
+            throw new InvalidOperationException($"{EnvironmentVariablesNames.SecurityLogsConnectionString} environment variable is required");
         }
 
         // Configure certificate password from environment variable
@@ -50,7 +38,7 @@ public static class ApplicationConfiguration
         }
         else
         {
-            throw new InvalidOperationException($"{EnvironmentVariablesNames.CertificatePassword} environment variable is required in production");
+            throw new InvalidOperationException($"{EnvironmentVariablesNames.CertificatePassword} environment variable is required");
         }
     }
 
