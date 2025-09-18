@@ -67,33 +67,17 @@ public static class ApplicationConfiguration
         {
             options.AddPolicy("ProductionCorsPolicy", policy =>
             {
-                if (builder.Environment.IsProduction())
+                // only allow specific origins from environment variables
+                var allowedOrigins = Environment.GetEnvironmentVariable(EnvironmentVariablesNames.CorsAllowedOrigins)?.Split(';') ?? Array.Empty<string>();
+                if (allowedOrigins.Length > 0 && !string.IsNullOrWhiteSpace(allowedOrigins[0]))
                 {
-                    // In production, only allow specific origins from environment variables
-                    var allowedOrigins = Environment.GetEnvironmentVariable(EnvironmentVariablesNames.CorsAllowedOrigins)?.Split(';') ?? Array.Empty<string>();
-                    if (allowedOrigins.Length > 0 && !string.IsNullOrWhiteSpace(allowedOrigins[0]))
-                    {
-                        policy.WithOrigins(allowedOrigins);
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException($"{EnvironmentVariablesNames.CorsAllowedOrigins} environment variable is required in production");
-                    }
+                    policy.WithOrigins(allowedOrigins);
                 }
                 else
                 {
-                    // In development, use origins from configuration
-                    var developmentOptions = builder.Configuration.GetSection(AppSettingsNames.ApplicationDevelopment).Get<DevelopmentOptions>();
-                    if (developmentOptions?.CorsOrigins?.Length > 0)
-                    {
-                        policy.WithOrigins(developmentOptions.CorsOrigins);
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException($"{AppSettingsNames.ApplicationDevelopmentCorsOrigins} configuration is required in development");
-                    }
+                    throw new InvalidOperationException($"{EnvironmentVariablesNames.CorsAllowedOrigins} environment variable is required in production");
                 }
-                
+
                 policy.WithMethods("GET", "POST", "OPTIONS")
                       .WithHeaders("Content-Type", "Authorization", "X-Requested-With")
                       .SetPreflightMaxAge(TimeSpan.FromMinutes(10));

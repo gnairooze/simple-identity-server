@@ -124,18 +124,10 @@ public static class ServiceConfiguration
                 options.AllowClientCredentialsFlow();
 
                 // Register the signing and encryption credentials
-                if (builder.Environment.IsProduction())
-                {
-                    // In production, use certificates from configuration
-                    options.AddEncryptionCertificate(CertificateManager.GetOrCreateEncryptionCertificate(certificateOptions))
-                           .AddSigningCertificate(CertificateManager.GetOrCreateSigningCertificate(certificateOptions));
-                }
-                else
-                {
-                    // In development, use development certificates
-                    options.AddDevelopmentEncryptionCertificate()
-                           .AddDevelopmentSigningCertificate();
-                }
+
+                // use certificates from configuration
+                options.AddEncryptionCertificate(CertificateManager.GetOrCreateEncryptionCertificate(certificateOptions))
+                    .AddSigningCertificate(CertificateManager.GetOrCreateSigningCertificate(certificateOptions));
 
                 // Register the ASP.NET Core host and configure the ASP.NET Core options
                 options.UseAspNetCore()
