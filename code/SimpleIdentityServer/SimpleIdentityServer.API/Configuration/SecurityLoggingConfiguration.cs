@@ -3,6 +3,7 @@ using Serilog.Events;
 using Serilog.Sinks.MSSqlServer;
 using System.Collections.ObjectModel;
 using System.Data;
+using Microsoft.IdentityModel.Protocols.Configuration;
 
 namespace SimpleIdentityServer.API.Configuration;
 
@@ -48,7 +49,7 @@ public static class SecurityLoggingConfiguration
             .Enrich.FromLogContext()
             .MinimumLevel.Debug() // Enable debug level logging
             .WriteTo.Console(
-                restrictedToMinimumLevel: builder.Environment.IsDevelopment() ? LogEventLevel.Debug : LogEventLevel.Information,
+                restrictedToMinimumLevel: LogEventLevel.Debug,
                 outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz}] [{Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}");
 
         // Only add SQL Server sink if we have a valid connection string
@@ -139,22 +140,15 @@ public static class SecurityLoggingConfiguration
         if (string.IsNullOrEmpty(connectionString))
         {
             var securityLogsConnection = Environment.GetEnvironmentVariable(EnvironmentVariablesNames.SecurityLogsConnectionString);
-            if (!string.IsNullOrEmpty(securityLogsConnection))
+
+            if (string.IsNullOrEmpty(securityLogsConnection))
             {
-                connectionString = securityLogsConnection;
+                throw new InvalidConfigurationException($"{EnvironmentVariablesNames.SecurityLogsConnectionString} environment variable is required");
             }
-            else if (environment.IsDevelopment())
-            {
-                // Fallback for development
-                connectionString = "Server=localhost;Database=SimpleIdentityServer_SecurityLogs_Dev;Integrated Security=true;TrustServerCertificate=true;MultipleActiveResultSets=true";
-            }
-            else
-            {
-                // In production, we'll configure console-only logging if no connection string is available
-                connectionString = null;
-            }
+
+            connectionString = securityLogsConnection;
         }
-        
+
         return connectionString;
     }
 

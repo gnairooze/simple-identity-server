@@ -61,35 +61,12 @@ public class ConfigurationValidationService
 
         if (string.IsNullOrWhiteSpace(defaultConnection))
         {
-            if (_environment.IsDevelopment())
-            {
-                // In development, check if environment variable is provided
-                var envConnection = Environment.GetEnvironmentVariable(EnvironmentVariablesNames.DefaultConnectionString);
-                if (string.IsNullOrWhiteSpace(envConnection))
-                {
-                    _validationErrors.Add($"{EnvironmentVariablesNames.DefaultConnectionString} environment variable is required in development when DefaultConnection is not set in appsettings.json");
-                }
-            }
-            else
-            {
-                _validationErrors.Add($"{EnvironmentVariablesNames.DefaultConnectionString} environment variable is required in production");
-            }
+            _validationErrors.Add($"{EnvironmentVariablesNames.DefaultConnectionString} environment variable is required");
         }
 
         if (string.IsNullOrWhiteSpace(securityLogsConnection))
         {
-            if (_environment.IsDevelopment())
-            {
-                var envConnection = Environment.GetEnvironmentVariable(EnvironmentVariablesNames.SecurityLogsConnectionString);
-                if (string.IsNullOrWhiteSpace(envConnection))
-                {
-                    _validationErrors.Add($"{EnvironmentVariablesNames.SecurityLogsConnectionString} environment variable is required in development when SecurityLogsConnection is not set in appsettings.json");
-                }
-            }
-            else
-            {
-                _validationErrors.Add($"{EnvironmentVariablesNames.SecurityLogsConnectionString} environment variable is required in production");
-            }
+            _validationErrors.Add($"{EnvironmentVariablesNames.SecurityLogsConnectionString} environment variable is required");
         }
     }
 
@@ -165,18 +142,15 @@ public class ConfigurationValidationService
             }
         }
 
-        // In production, validate certificate paths exist
-        if (!_environment.IsDevelopment())
+        // validate certificate paths exist
+        if (!string.IsNullOrEmpty(options.EncryptionCertificatePath) && !File.Exists(options.EncryptionCertificatePath))
         {
-            if (!string.IsNullOrEmpty(options.EncryptionCertificatePath) && !File.Exists(options.EncryptionCertificatePath))
-            {
-                _validationErrors.Add($"Encryption certificate not found at path: {options.EncryptionCertificatePath}");
-            }
+            _validationErrors.Add($"Encryption certificate not found at path: {options.EncryptionCertificatePath}");
+        }
 
-            if (!string.IsNullOrEmpty(options.SigningCertificatePath) && !File.Exists(options.SigningCertificatePath))
-            {
-                _validationErrors.Add($"Signing certificate not found at path: {options.SigningCertificatePath}");
-            }
+        if (!string.IsNullOrEmpty(options.SigningCertificatePath) && !File.Exists(options.SigningCertificatePath))
+        {
+            _validationErrors.Add($"Signing certificate not found at path: {options.SigningCertificatePath}");
         }
     }
 
@@ -269,14 +243,11 @@ public class ConfigurationValidationService
 
     private void ValidateCorsSettings()
     {
-        // In production, CORS origins must be specified
-        if (!_environment.IsDevelopment())
+        // CORS origins must be specified
+        var corsOrigins = Environment.GetEnvironmentVariable(EnvironmentVariablesNames.CorsAllowedOrigins);
+        if (string.IsNullOrWhiteSpace(corsOrigins))
         {
-            var corsOrigins = Environment.GetEnvironmentVariable(EnvironmentVariablesNames.CorsAllowedOrigins);
-            if (string.IsNullOrWhiteSpace(corsOrigins))
-            {
-                _validationErrors.Add($"{EnvironmentVariablesNames.CorsAllowedOrigins} environment variable is required in production");
-            }
+            _validationErrors.Add($"{EnvironmentVariablesNames.CorsAllowedOrigins} environment variable is required");
         }
     }
 

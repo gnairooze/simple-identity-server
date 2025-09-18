@@ -16,12 +16,6 @@ SecurityLoggingConfiguration.ConfigureSerilog(builder);
 // Configure ASP.NET Core logging to enable debug level for debug logging middleware
 builder.Logging.ClearProviders();
 builder.Logging.AddConfiguration(builder.Configuration.GetSection(AppSettingsNames.Logging));
-if (builder.Environment.IsDevelopment())
-{
-    // Enable debug logging in development
-    builder.Logging.SetMinimumLevel(LogLevel.Debug);
-    builder.Logging.AddFilter("SimpleIdentityServer.API.Middleware.DebugLoggingMiddleware", LogLevel.Debug);
-}
 
 // Configure CORS policies
 ApplicationConfiguration.ConfigureCors(builder);
