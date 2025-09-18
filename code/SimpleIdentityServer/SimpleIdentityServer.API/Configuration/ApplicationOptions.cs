@@ -34,11 +34,6 @@ public class ApplicationOptions
     /// </summary>
     [Required(ErrorMessage = "Security logging configuration is required")]
     public SecurityLoggingOptions SecurityLogging { get; set; } = new();
-
-    /// <summary>
-    /// Development-only settings
-    /// </summary>
-    public DevelopmentOptions? Development { get; set; }
 }
 
 public class OpenIddictOptions
@@ -141,24 +136,6 @@ public class SecurityLoggingOptions
     /// </summary>
     [Range(1, 60, ErrorMessage = "Batch period must be between 1 and 60 seconds")]
     public int BatchPeriodSeconds { get; set; }
-}
-
-public class DevelopmentOptions
-{
-    /// <summary>
-    /// CORS origins for development (localhost ports)
-    /// </summary>
-    public string[] CorsOrigins { get; set; } = Array.Empty<string>();
-
-    /// <summary>
-    /// Default connection string for development
-    /// </summary>
-    public string? DefaultConnectionString { get; set; }
-
-    /// <summary>
-    /// Security logs connection string for development
-    /// </summary>
-    public string? SecurityLogsConnectionString { get; set; }
 }
 
 /// <summary>
