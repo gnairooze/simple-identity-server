@@ -126,8 +126,8 @@ public static class ServiceConfiguration
                 // Register the signing and encryption credentials
 
                 // use certificates from configuration
-                options.AddEncryptionCertificate(CertificateManager.GetOrCreateEncryptionCertificate(certificateOptions))
-                    .AddSigningCertificate(CertificateManager.GetOrCreateSigningCertificate(certificateOptions));
+                options.AddEncryptionCertificate(CertificateManager.GetEncryptionCertificate(certificateOptions))
+                    .AddSigningCertificate(CertificateManager.GetSigningCertificate(certificateOptions));
 
                 // Register the ASP.NET Core host and configure the ASP.NET Core options
                 options.UseAspNetCore()
