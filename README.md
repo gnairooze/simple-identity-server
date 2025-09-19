@@ -286,7 +286,56 @@ SIMPLE_IDENTITY_SERVER_CERT_PASSWORD=YourCertPassword123!
 }
 ```
 
-### 4. Run the Application
+### 4. Generate Certificates
+
+Before running the application, you need to generate encryption and signing certificates using the CLI tool:
+
+1. **Navigate to CLI project:**
+   ```bash
+   cd code/SimpleIdentityServer/SimpleIdentityServer.CLI
+   ```
+
+2. **Configure the CLI database connection:**
+   
+   **Edit appsettings.json in CLI project:**
+   ```json
+   {
+     "ConnectionStrings": {
+       "DefaultConnection": "Server=(localdb)\\MSSQLLocalDB;Database=SimpleIdentityServer_Dev;Integrated Security=true;TrustServerCertificate=true;MultipleActiveResultSets=true"
+     }
+   }
+   ```
+
+3. **Build the CLI tool:**
+   ```bash
+   dotnet build
+   ```
+
+4. **Create certificates directory:**
+   ```bash
+   mkdir -p ../SimpleIdentityServer.API/certs
+   ```
+
+5. **Generate encryption certificate:**
+   ```bash
+   dotnet run -- cert create-encryption --path "../SimpleIdentityServer.API/certs/encryption.pfx"
+   ```
+
+6. **Generate signing certificate:**
+   ```bash
+   dotnet run -- cert create-signing --path "../SimpleIdentityServer.API/certs/signing.pfx"
+   ```
+
+   The CLI will automatically use the `SIMPLE_IDENTITY_SERVER_CERT_PASSWORD` environment variable you set in step 3 for the certificate password.
+
+7. **Verify certificates were created:**
+   ```bash
+   ls -la ../SimpleIdentityServer.API/certs/
+   ```
+
+   You should see both `encryption.pfx` and `signing.pfx` files.
+
+### 5. Run the Application
 
 ```bash
 cd code/SimpleIdentityServer/SimpleIdentityServer.API
@@ -297,7 +346,7 @@ The application will be available at:
 - HTTPS: `https://localhost:7443`
 - HTTP: `http://localhost:5000` (redirects to HTTPS)
 
-### 5. Verify Installation
+### 6. Verify Installation
 
 1. **Check health endpoint:**
    ```bash
