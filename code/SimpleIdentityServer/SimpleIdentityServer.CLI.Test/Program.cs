@@ -34,7 +34,7 @@ async Task Test01_ListApplications()
     Console.WriteLine("=== Test01: List Applications ===");
     try
     {
-        var (appMgr, _) = CreateManagers();
+        var (appMgr, _, _) = CreateManagers();
         await appMgr.ListApplications();
     }
     catch (Exception ex)
@@ -50,7 +50,7 @@ async Task Test02_ListScopes()
     Console.WriteLine("=== Test02: List Scopes ===");
     try
     {
-        var (_, scpMgr) = CreateManagers();
+        var (_, scpMgr, _) = CreateManagers();
         await scpMgr.ListScopes();
     }
     catch (Exception ex)
@@ -66,7 +66,7 @@ async Task Test03_AddApplication()
     Console.WriteLine("=== Test03: Add Application ===");
     try
     {
-        var (appMgr, _) = CreateManagers();
+        var (appMgr, _, _) = CreateManagers();
         await appMgr.AddApplication(
             "test-client-01", 
             "test-secret-01", 
@@ -87,7 +87,7 @@ async Task Test04_GetApplication()
     Console.WriteLine("=== Test04: Get Application ===");
     try
     {
-        var (appMgr, _) = CreateManagers();
+        var (appMgr, _, _) = CreateManagers();
         
         // Try to get the application we just created
         await appMgr.GetApplication("test-client-01");
@@ -111,7 +111,7 @@ async Task Test05_UpdateApplication()
     Console.WriteLine("=== Test05: Update Application ===");
     try
     {
-        var (appMgr, _) = CreateManagers();
+        var (appMgr, _, _) = CreateManagers();
         
         // Update the test application we created
         await appMgr.UpdateApplication(
@@ -137,7 +137,7 @@ async Task Test06_DeleteApplication()
     Console.WriteLine("=== Test06: Delete Application ===");
     try
     {
-        var (appMgr, _) = CreateManagers();
+        var (appMgr, _, _) = CreateManagers();
         
         // Delete the test application we created
         await appMgr.DeleteApplication("test-client-01");
@@ -158,7 +158,7 @@ async Task Test07_AddScope()
     Console.WriteLine("=== Test07: Add Scope ===");
     try
     {
-        var (_, scpMgr) = CreateManagers();
+        var (_, scpMgr, _) = CreateManagers();
         await scpMgr.AddScope(
             "test-scope-01",
             "Test Scope 01",
@@ -178,7 +178,7 @@ async Task Test08_GetScope()
     Console.WriteLine("=== Test08: Get Scope ===");
     try
     {
-        var (_, scpMgr) = CreateManagers();
+        var (_, scpMgr, _) = CreateManagers();
         
         // Try to get the scope we just created
         await scpMgr.GetScope("test-scope-01");
@@ -202,7 +202,7 @@ async Task Test09_UpdateScope()
     Console.WriteLine("=== Test09: Update Scope ===");
     try
     {
-        var (_, scpMgr) = CreateManagers();
+        var (_, scpMgr, _) = CreateManagers();
         
         // Update the test scope we created
         await scpMgr.UpdateScope(
@@ -227,7 +227,7 @@ async Task Test10_DeleteScope()
     Console.WriteLine("=== Test10: Delete Scope ===");
     try
     {
-        var (_, scpMgr) = CreateManagers();
+        var (_, scpMgr, _) = CreateManagers();
         
         // Delete the test scope we created
         await scpMgr.DeleteScope("test-scope-01");
@@ -243,10 +243,10 @@ async Task Test10_DeleteScope()
 }
 
 // Helper method to create managers (using CLI Program.cs)
-(ApplicationManagement, ScopeManagement) CreateManagers()
+(ApplicationManagement, ScopeManagement, CertificateManagement) CreateManagers()
 {
-    SimpleIdentityServer.CLI.Program.CreateManagers(out var appMgr, out var scpMgr);
-    return (appMgr, scpMgr);
+    SimpleIdentityServer.CLI.Program.CreateManagers(out var appMgr, out var scpMgr, out var certMgr);
+    return (appMgr, scpMgr, certMgr);
 }
 
 

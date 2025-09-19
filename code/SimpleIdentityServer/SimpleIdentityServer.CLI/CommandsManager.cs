@@ -10,9 +10,9 @@ namespace SimpleIdentityServer.CLI
 {
     public class CommandsManager
     {
-        public static RootCommand PrepareCommands(ApplicationManagement appMgr, ScopeManagement scpMgr)
+        public static RootCommand PrepareCommands(ApplicationManagement appMgr, ScopeManagement scpMgr, CertificateManagement certMgr)
         {
-            var rootCommand = new RootCommand("OpenIddict Management CLI - Manage applications and scopes");
+            var rootCommand = new RootCommand("OpenIddict Management CLI - Manage applications, scopes, and certificates");
 
             // Application commands
             var appCommand = new Command("app", "Manage OpenIddict applications");
@@ -105,8 +105,31 @@ namespace SimpleIdentityServer.CLI
             scopeCommand.AddCommand(updateScopeCommand);
             scopeCommand.AddCommand(deleteScopeCommand);
 
+            // Certificate commands
+            var certCommand = new Command("cert", "Manage certificates");
+
+            // Create encryption certificate command
+            var createEncryptionCertCommand = new Command("create-encryption", "Create encryption certificate");
+            createEncryptionCertCommand.AddOption(new Option<string>("--path", "Path where to save the certificate") { IsRequired = true });
+            createEncryptionCertCommand.AddOption(new Option<string>("--password", "Certificate password (if not provided, will use environment variable)"));
+            createEncryptionCertCommand.SetHandler(certMgr.CreateEncryptionCertificate,
+                createEncryptionCertCommand.Options.OfType<Option<string>>().ElementAt(0),
+                createEncryptionCertCommand.Options.OfType<Option<string>>().ElementAt(1));
+
+            // Create signing certificate command
+            var createSigningCertCommand = new Command("create-signing", "Create signing certificate");
+            createSigningCertCommand.AddOption(new Option<string>("--path", "Path where to save the certificate") { IsRequired = true });
+            createSigningCertCommand.AddOption(new Option<string>("--password", "Certificate password (if not provided, will use environment variable)"));
+            createSigningCertCommand.SetHandler(certMgr.CreateSigningCertificate,
+                createSigningCertCommand.Options.OfType<Option<string>>().ElementAt(0),
+                createSigningCertCommand.Options.OfType<Option<string>>().ElementAt(1));
+
+            certCommand.AddCommand(createEncryptionCertCommand);
+            certCommand.AddCommand(createSigningCertCommand);
+
             rootCommand.AddCommand(appCommand);
             rootCommand.AddCommand(scopeCommand);
+            rootCommand.AddCommand(certCommand);
             return rootCommand;
         }
     }

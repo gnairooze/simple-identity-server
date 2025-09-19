@@ -471,8 +471,8 @@ public static class CommandArgumentsTests
     {
         try
         {
-            Program.CreateManagers(out var appMgr, out var scpMgr);
-            return CommandsManager.PrepareCommands(appMgr, scpMgr);
+            Program.CreateManagers(out var appMgr, out var scpMgr, out var certMgr);
+            return CommandsManager.PrepareCommands(appMgr, scpMgr, certMgr);
         }
         catch (Exception ex)
         {

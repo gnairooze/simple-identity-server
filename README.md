@@ -572,6 +572,52 @@ dotnet run -- scope update \
 dotnet run -- scope delete --name "scope-to-delete"
 ```
 
+### Certificate Management
+
+The CLI tool provides commands to create self-signed certificates for encryption and signing operations used by the identity server.
+
+**Create encryption certificate:**
+```bash
+dotnet run -- cert create-encryption --path "./certs/encryption.pfx" --password "YourCertPassword123!"
+```
+
+**Create signing certificate:**
+```bash
+dotnet run -- cert create-signing --path "./certs/signing.pfx" --password "YourCertPassword123!"
+```
+
+**Using environment variable for password:**
+```bash
+# Set environment variable
+export SIMPLE_IDENTITY_SERVER_CERT_PASSWORD="YourCertPassword123!"
+
+# Create certificates without password parameter
+dotnet run -- cert create-encryption --path "./certs/encryption.pfx"
+dotnet run -- cert create-signing --path "./certs/signing.pfx"
+```
+
+**Certificate command options:**
+- `--path` (required): Path where to save the certificate file
+- `--password` (optional): Certificate password. If not provided, uses `SIMPLE_IDENTITY_SERVER_CERT_PASSWORD` environment variable
+
+**Certificate features:**
+- Creates self-signed X.509 certificates with 2048-bit RSA keys
+- Certificates are valid for 2 years from creation date
+- Automatically creates directory structure if it doesn't exist
+- Supports both PFX format with password protection
+- Displays certificate details after creation (subject, thumbprint, validity period)
+
+**Example output:**
+```
+Creating encryption certificate at: ./certs/encryption.pfx
+✅ Encryption certificate created successfully!
+   Path: ./certs/encryption.pfx
+   Subject: CN=SimpleIdentityServer-Encryption
+   Thumbprint: F12F9886D9B99C59209DA17904EDC670593628FC
+   Valid from: 9/17/2025 12:56:29 PM
+   Valid until: 9/18/2027 12:56:29 PM
+```
+
 ### Pre-configured Clients
 
 The system comes with these pre-configured clients:

@@ -15,14 +15,14 @@ public class Program
 {
     static async Task<int> Main(string[] args)
     {
-        CreateManagers(out var appMgr, out var scpMgr);
+        CreateManagers(out var appMgr, out var scpMgr, out var certMgr);
 
-        var rootCommand = CommandsManager.PrepareCommands(appMgr, scpMgr);
+        var rootCommand = CommandsManager.PrepareCommands(appMgr, scpMgr, certMgr);
 
         return await rootCommand.InvokeAsync(args);
     }
     
-    public static void CreateManagers(out ApplicationManagement appMgr, out ScopeManagement scpMgr)
+    public static void CreateManagers(out ApplicationManagement appMgr, out ScopeManagement scpMgr, out CertificateManagement certMgr)
     {
         var host = CreateHostBuilder().Build();
         var applicationManager = host.Services.GetRequiredService<IOpenIddictApplicationManager>();
@@ -30,6 +30,8 @@ public class Program
 
         var scopeManager = host.Services.GetRequiredService<IOpenIddictScopeManager>();
         scpMgr = new(scopeManager);
+
+        certMgr = new();
     }
 
     public static IHostBuilder CreateHostBuilder()
