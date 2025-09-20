@@ -38,38 +38,35 @@ This guide demonstrates how to:
 
 ## Step 1: Register Client in Identity Provider
 
-### 1.1 Add New Client to ClientService
+### 1.1 Add New Client Using CLI
 
-Edit `Services/ClientService.cs` and add your new client:
-
-```csharp
-// Add this to the SeedClientsAsync method
-await _applicationManager.CreateAsync(new OpenIddictApplicationDescriptor
-{
-    ClientId = "my-resource-api-client",
-    ClientSecret = "your-secure-secret-here",
-    DisplayName = "My Resource API Client",
-    Permissions =
-    {
-        OpenIddictConstants.Permissions.Endpoints.Token,
-        OpenIddictConstants.Permissions.Endpoints.Introspection,
-        OpenIddictConstants.Permissions.GrantTypes.ClientCredentials,
-        OpenIddictConstants.Permissions.Scopes.Email,
-        OpenIddictConstants.Permissions.Scopes.Profile,
-        OpenIddictConstants.Permissions.Scopes.Roles,
-        "api1.read",
-        "api1.write"
-    }
-});
-```
-
-### 1.2 Restart Identity Server
+Use the Simple Identity Server CLI to add your new client:
 
 ```bash
-dotnet run
+cd code/SimpleIdentityServer/SimpleIdentityServer.CLI
+dotnet run -- app add --client-id "my-resource-api-client" --client-secret "your-secure-secret-here" --display-name "My Resource API Client" --permissions "ept:token" "ept:introspection" "gt:client_credentials" "scp:email" "scp:profile" "scp:roles" "scp:api1.read" "scp:api1.write"
 ```
 
-The new client will be automatically created in the database.
+You can also verify the client was created successfully:
+
+```bash
+dotnet run -- app get --client-id "my-resource-api-client"
+```
+
+Or list all applications:
+
+```bash
+dotnet run -- app list
+```
+
+**Note**: The CLI uses OpenIddict's permission format with prefixes:
+- `ept:` for endpoints (e.g., `ept:token`, `ept:introspection`)
+- `gt:` for grant types (e.g., `gt:client_credentials`)
+- `scp:` for scopes (e.g., `scp:email`, `scp:api1.read`)
+
+### 1.2 Verify Client Registration
+
+The CLI command directly adds the client to the database, so no Identity Server restart is required. The client is immediately available for use. You can verify this by checking the application list or testing token requests directly.
 
 ## Step 2: Create Resource API
 
@@ -250,9 +247,7 @@ public class DataController : ControllerBase
 }
 ```
 
-### 3.2 Create Custom Token Validation Service (Optional)
-
-For more advanced token validation, create a custom service:
+### 3.2 Create Custom Token Validation Service
 
 ```csharp
 using Microsoft.IdentityModel.Tokens;
