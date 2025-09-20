@@ -11,8 +11,9 @@ This document provides comprehensive use cases for the Simple Identity Server AP
 5. [Authentication Flow (Client Credentials)](#authentication-flow-client-credentials)
 6. [Use Cases](#use-cases)
 7. [Token Introspection](#token-introspection)
-8. [Error Handling](#error-handling)
-9. [Security Considerations](#security-considerations)
+8. [Refresh Tokens](#refresh-tokens)
+9. [Error Handling](#error-handling)
+10. [Security Considerations](#security-considerations)
 
 ## Overview
 
@@ -418,6 +419,265 @@ curl -X POST "https://localhost:7443/connect/introspect" \
 ```
 
 *Note: Less trusted clients receive minimal token information for security.*
+
+## Refresh Tokens
+
+### Current Implementation Status
+
+**⚠️ Important Note**: The current Simple Identity Server implementation **only supports the Client Credentials grant type**, which **does not use refresh tokens**. Refresh tokens are primarily used with:
+
+- Authorization Code flow (for web applications)
+- Resource Owner Password Credentials flow 
+- Implicit flow (deprecated)
+
+However, the system is **configured and ready** to support refresh tokens with a 14-day lifetime when other OAuth2 flows are implemented.
+
+### Configuration
+
+The server is pre-configured for refresh tokens:
+
+```json
+{
+  "Application": {
+    "OpenIddict": {
+      "AccessTokenLifetimeMinutes": 60,
+      "RefreshTokenLifetimeDays": 14
+    }
+  }
+}
+```
+
+### Why Client Credentials Doesn't Use Refresh Tokens
+
+The Client Credentials flow is designed for **service-to-service** authentication where:
+
+- The client can securely store credentials
+- No user interaction is required
+- The client can request new tokens anytime using its credentials
+- Long-lived tokens aren't necessary since the client can always authenticate
+
+### Refresh Token Flow (When Implemented)
+
+If the server were extended to support Authorization Code or other flows, here's how refresh tokens would work:
+
+#### Flow Diagram
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant IdentityServer
+    participant ResourceAPI
+    
+    Note over Client,IdentityServer: Initial Authorization
+    Client->>IdentityServer: POST /connect/token (authorization_code)
+    IdentityServer-->>Client: access_token + refresh_token
+    
+    Note over Client,ResourceAPI: Using Access Token
+    Client->>ResourceAPI: GET /api/resource (Bearer access_token)
+    ResourceAPI-->>Client: Protected resource data
+    
+    Note over Client,IdentityServer: Token Refresh (when access_token expires)
+    Client->>IdentityServer: POST /connect/token (refresh_token grant)
+    IdentityServer-->>Client: new access_token + new refresh_token
+    
+    Note over Client,ResourceAPI: Continue with new token
+    Client->>ResourceAPI: GET /api/resource (Bearer new_access_token)
+    ResourceAPI-->>Client: Protected resource data
+```
+
+### Hypothetical Refresh Token Examples
+
+*Note: These examples show how refresh tokens would work if Authorization Code flow were implemented.*
+
+#### Use Case: Refreshing an Expired Access Token
+
+**Step 1: Initial Token Request (Authorization Code)**
+
+```http
+POST https://localhost:7443/connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=authorization_code
+&client_id=web-app
+&client_secret=webapp-secret
+&code=ABC123
+&redirect_uri=https://myapp.com/callback
+```
+
+**Expected Response:**
+
+```json
+{
+  "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9...",
+  "refresh_token": "def456...",
+  "token_type": "Bearer",
+  "expires_in": 3600,
+  "scope": "api1.read email profile"
+}
+```
+
+**Step 2: Using Refresh Token (When Access Token Expires)**
+
+```http
+POST https://localhost:7443/connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=refresh_token
+&client_id=web-app
+&client_secret=webapp-secret
+&refresh_token=def456...
+```
+
+**Expected Response:**
+
+```json
+{
+  "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9...",
+  "refresh_token": "ghi789...",
+  "token_type": "Bearer", 
+  "expires_in": 3600,
+  "scope": "api1.read email profile"
+}
+```
+
+#### cURL Examples (Hypothetical)
+
+**Refresh Token Request:**
+
+```bash
+curl -X POST "https://localhost:7443/connect/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=refresh_token&client_id=web-app&client_secret=webapp-secret&refresh_token=def456..."
+```
+
+### Current Behavior: Refresh Token Grant Not Supported
+
+If you attempt to use refresh token grant with the current implementation:
+
+#### Request
+
+```bash
+curl -X POST "https://localhost:7443/connect/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=refresh_token&client_id=service-api&client_secret=supersecret&refresh_token=any-token"
+```
+
+#### Response
+
+```json
+{
+  "error": "unsupported_grant_type",
+  "error_description": "The specified grant type is not supported."
+}
+```
+
+### Refresh Token Security Features (When Implemented)
+
+When refresh tokens are implemented, they would include these security features:
+
+#### 1. Rotation
+- Each refresh token use generates a new refresh token
+- Old refresh tokens are invalidated
+- Prevents token replay attacks
+
+#### 2. Binding
+- Refresh tokens are bound to specific clients
+- Cannot be used by different client applications
+- Includes client authentication
+
+#### 3. Scope Limitations
+- Refresh tokens can only request same or narrower scopes
+- Cannot escalate permissions beyond original grant
+- Scope validation on each refresh
+
+#### 4. Revocation
+Refresh tokens can be revoked through the introspection endpoint:
+
+```bash
+curl -X POST "https://localhost:7443/connect/introspect" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -H "Authorization: Basic c2VydmljZS1hcGk6c3VwZXJzZWNyZXQ=" \
+  -d "token=refresh_token_here&token_type_hint=refresh_token"
+```
+
+### Alternative: Client Credentials Token Refresh
+
+Since the current implementation uses Client Credentials, the equivalent of "refreshing" is simply requesting a new token:
+
+#### Postman Configuration
+
+```http
+POST https://localhost:7443/connect/token
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials
+&client_id=service-api
+&client_secret=supersecret
+&scope=api1.read api1.write
+```
+
+#### Benefits of Client Credentials Approach
+
+1. **Simpler**: No need to manage refresh token storage
+2. **More Secure**: Credentials are validated on every request
+3. **Stateless**: No server-side token state to manage
+4. **Immediate Revocation**: Disable client credentials to revoke all access
+
+### Future Implementation Considerations
+
+To add refresh token support, the server would need:
+
+1. **Enable Additional Grant Types**:
+   ```csharp
+   options.AllowAuthorizationCodeFlow()
+          .AllowRefreshTokenFlow();
+   ```
+
+2. **Add Authorization Endpoint**:
+   ```csharp
+   options.SetAuthorizationEndpointUris("/connect/authorize");
+   ```
+
+3. **Implement Authorization Controller**:
+   - Handle authorization requests
+   - User consent management
+   - Authorization code generation
+
+4. **Update Token Controller**:
+   - Handle `refresh_token` grant type
+   - Implement token rotation
+   - Validate refresh token binding
+
+### Best Practices for Refresh Tokens
+
+When implementing refresh tokens in the future:
+
+#### Security
+- Always rotate refresh tokens
+- Use short-lived access tokens (1-24 hours)
+- Implement refresh token binding
+- Monitor for suspicious refresh patterns
+
+#### Storage
+- Store refresh tokens securely
+- Encrypt refresh tokens at rest
+- Implement proper cleanup of expired tokens
+- Use database indexes for performance
+
+#### Client Implementation
+- Handle refresh token expiration gracefully
+- Implement automatic token refresh before expiration
+- Store refresh tokens securely (encrypted storage)
+- Clear tokens on application logout
+
+### Summary
+
+- **Current State**: Only Client Credentials flow supported (no refresh tokens needed)
+- **Configuration**: Refresh token settings are ready (14-day lifetime)
+- **Alternative**: Request new tokens using client credentials
+- **Future**: System can be extended to support refresh tokens with Authorization Code flow
+
+The current Client Credentials approach is actually **more secure and simpler** for service-to-service authentication, which is the primary use case for this identity server.
 
 ## Error Handling
 
