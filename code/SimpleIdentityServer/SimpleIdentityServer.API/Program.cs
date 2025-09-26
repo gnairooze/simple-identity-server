@@ -54,4 +54,4 @@ using (var scope = app.Services.CreateScope())
 // Start the log cleanup service
 SecurityLoggingConfiguration.StartLogCleanupService(app);
 
-app.Run();
+await app.RunAsync();
