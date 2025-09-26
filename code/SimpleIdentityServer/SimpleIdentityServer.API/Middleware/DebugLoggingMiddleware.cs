@@ -115,9 +115,7 @@ public class DebugLoggingMiddleware
                 Body = responseBody
             };
 
-            var logLevel = response.StatusCode >= 400 ? LogLevel.Debug : LogLevel.Debug;
-            
-            _logger.Log(logLevel, "HTTP Response Details: {ResponseData}", 
+            _logger.Log(LogLevel.Debug, "HTTP Response Details: {ResponseData}", 
                 JsonSerializer.Serialize(logData, new JsonSerializerOptions 
                 { 
                     WriteIndented = true,
