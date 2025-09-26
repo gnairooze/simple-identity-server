@@ -42,7 +42,7 @@ MiddlewareConfiguration.ConfigureMiddleware(app, loadBalancerConfig);
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    context.Database.EnsureCreated();
+    await context.Database.EnsureCreatedAsync();
     
     var clientService = scope.ServiceProvider.GetRequiredService<IClientService>();
     var scopeService = scope.ServiceProvider.GetRequiredService<IScopeService>();
