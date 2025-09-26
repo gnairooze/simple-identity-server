@@ -1,13 +1,15 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OpenIddict.Abstractions;
 using OpenIddict.Core;
-using Microsoft.EntityFrameworkCore;
+using SimpleIdentityServer.CLI.Business;
+using SimpleIdentityServer.CLI.Config;
+using SimpleIdentityServer.CLI.Data;
+using SimpleIdentityServer.CLI.Services;
 using System.CommandLine;
 using System.CommandLine.Invocation;
-using SimpleIdentityServer.CLI.Business;
-using SimpleIdentityServer.CLI.Data;
 
 namespace SimpleIdentityServer.CLI;
 
@@ -40,7 +42,13 @@ public class Program
             .ConfigureServices((context, services) =>
             {
                 // Get connection string with validation
-                var connectionString = context.Configuration.GetConnectionString("DefaultConnection");
+                // Get connection strings from environment variables
+                var connectionString = Environment.GetEnvironmentVariable(EnvironmentVariablesNames.DefaultConnectionString);
+
+                if (string.IsNullOrEmpty(connectionString))
+                {
+                    connectionString = context.Configuration.GetConnectionString("DefaultConnection");
+                }
                 
                 if (string.IsNullOrEmpty(connectionString))
                 {

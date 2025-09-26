@@ -1,3 +1,4 @@
+using SimpleIdentityServer.CLI.Config;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
@@ -102,13 +103,4 @@ public class CertificateOptions
     /// Path to signing certificate
     /// </summary>
     public string SigningCertificatePath { get; set; } = string.Empty;
-}
-
-public static class EnvironmentVariablesNames
-{
-    /// <summary>
-    /// Certificate password environment variable key.
-    /// Used to specify the password for certificate files used by OpenIddict.
-    /// </summary>
-    public static readonly string CertificatePassword = "SIMPLE_IDENTITY_SERVER_CERT_PASSWORD";
 }
