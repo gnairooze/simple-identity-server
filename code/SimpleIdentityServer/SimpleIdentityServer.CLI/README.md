@@ -17,7 +17,7 @@ A command-line interface for managing OpenIddict applications and scopes in the 
 
 ## Configuration
 
-Update the `appsettings.json` file with your database connection string:
+Add system environment variable for the database connection string named `SIMPLE_IDENTITY_SERVER_DEFAULT_CONNECTION_STRING`, or alternatively, you can set it in the `appsettings.json` file. update the `appsettings.json` file with your database connection string:
 
 ```json
 {

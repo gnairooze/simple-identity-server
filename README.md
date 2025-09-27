@@ -152,9 +152,13 @@ The Docker deployment includes:
 **Required Environment Variables in `production.env`:**
 
 ```bash
-# Database
-SIMPLE_IDENTITY_SERVER_DB_PASSWORD=StrongPassword123!
+# SQL Server configuration
+ACCEPT_EULA=Y
+MSSQL_PID=Express
+MSSQL_MEMORY_LIMIT_MB=4096
 SA_PASSWORD=StrongPassword123!
+SIMPLE_IDENTITY_SERVER_DB_PASSWORD=StrongPassword123!
+
 
 # Connection Strings
 SIMPLE_IDENTITY_SERVER_DEFAULT_CONNECTION_STRING=Server=sqlserver,1433;Database=SimpleIdentityServer;MultipleActiveResultSets=true;uid=sa;pwd=StrongPassword123!;TrustServerCertificate=true;Encrypt=true
@@ -166,6 +170,19 @@ SIMPLE_IDENTITY_SERVER_CORS_ALLOWED_ORIGINS=https://identity.dev.test;https://yo
 
 # Certificates
 SIMPLE_IDENTITY_SERVER_CERT_PASSWORD=SharedCertPassword123!
+
+# Kestrel Certificate Configuration
+Kestrel__Certificates__Default__Path=/app/certs/identity-dev-test.crt
+Kestrel__Certificates__Default__KeyPath=/app/certs/identity-dev-test.key
+
+# ASP.NET CORE CONFIGURATION
+ASPNETCORE_ENVIRONMENT=Production
+ASPNETCORE_URLS=https://+:443
+
+LoadBalancer__EnableForwardedHeaders=true
+LoadBalancer__TrustedProxies__0=172.25.0.10
+LoadBalancer__ForwardLimit=2
+LoadBalancer__RequireHeaderSymmetry=false
 
 # Load Balancer
 LoadBalancer__EnableForwardedHeaders=true
@@ -214,30 +231,15 @@ To add more API instances:
 
 ### 1. Database Setup
 
-**Option A: SQL Server LocalDB (Recommended for development)**
-
-```bash
-# LocalDB is included with Visual Studio
-# Connection string will be: Server=(localdb)\MSSQLLocalDB;Database=SimpleIdentityServer_Dev;...
-```
-
-**Option B: SQL Server Express**
+**SQL Server Express**
 
 1. Download and install SQL Server Express
 2. Update connection strings in `appsettings.json`
 
-### 2. Certificate Setup
+### 2. Transport Certificate Setup
 
 For HTTPS development, you'll need certificates:
-
-**Custom Certificates**
-
-1. Create certificates directory:
-   ```bash
-   mkdir -p code/SimpleIdentityServer/SimpleIdentityServer.API/certs
-   ```
-
-2. Generate certificates (example using OpenSSL):
+1. Generate certificates (example using OpenSSL):
    ```bash
    # Generate private key
    openssl genrsa -out identity-dev-test.key 2048
@@ -255,7 +257,7 @@ Create a local environment configuration:
 
 **For Development:**
 
-Set these environment variables or update `appsettings.json`:
+Set these environment variables
 
 ```bash
 # Database
@@ -273,20 +275,9 @@ SIMPLE_IDENTITY_SERVER_CORS_ALLOWED_ORIGINS=https://localhost:3000;https://local
 SIMPLE_IDENTITY_SERVER_CERT_PASSWORD=YourCertPassword123!
 ```
 
-**Update appsettings.json for local development:**
+do not add the remaining environment variables related to docker deployment. it will make the app stopped starting because of certificate errors.
 
-```json
-{
-  "Application": {
-    "Development": {
-      "DefaultConnectionString": "Server=(localdb)\\MSSQLLocalDB;Database=SimpleIdentityServer_Dev;Integrated Security=true;TrustServerCertificate=true;MultipleActiveResultSets=true",
-      "SecurityLogsConnectionString": "Server=(localdb)\\MSSQLLocalDB;Database=SimpleIdentityServer_SecurityLogs_Dev;Integrated Security=true;TrustServerCertificate=true;MultipleActiveResultSets=true"
-    }
-  }
-}
-```
-
-### 4. Generate Certificates
+### 4. Generate OpenIddict Certificates
 
 Before running the application, you need to generate encryption and signing certificates using the CLI tool:
 
