@@ -1,0 +1,27 @@
+name: simple-identity-server
+
+services:
+  api-instance-1:
+    image: gnairooze/simple-identity-server:latest
+    container_name: simple-identity-server-api
+    ports:
+      - "8091:443"  # Direct access for testing
+    env_file:
+      - production.env
+    environment:
+      # Instance-specific configuration (only values that need to be different per instance)
+      - SIMPLE_IDENTITY_SERVER_NODE_NAME=simple-identity-api-instance-1
+    volumes:
+      - ./certs:/app/certs
+    networks:
+      simple-identity-server-net:
+        ipv4_address: 172.26.0.11
+    restart: unless-stopped
+
+networks:
+  simple-identity-server-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.26.0.0/16
+          gateway: 172.26.0.1
