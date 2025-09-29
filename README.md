@@ -920,4 +920,16 @@ simple-identity-server/
 
 ---
 
+## docker hub repository
+
+[gnairooze/simple-identity-server | Docker Hub](https://hub.docker.com/r/gnairooze/simple-identity-server)
+
+---
+
+## documentation
+
 For more detailed information, see the documentation in the `docs/` directory.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
