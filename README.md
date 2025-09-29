@@ -133,7 +133,14 @@ dotnet build --configuration Release
    docker-compose up -d
    ```
 
-8. **test the containers:**
+8. **first time run - create database SimpleIdentityServerSecurityLogs manually:**
+   connect to the sql server container and run the following script:
+   
+   ```sql
+   CREATE DATABASE SimpleIdentityServerSecurityLogs;
+   ```
+
+9. **test the containers:**
    test the containers by using [this postman collection](docs/SimpleIdentityServer.postman_collection.json)
 
 ### Container Architecture
