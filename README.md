@@ -5,6 +5,7 @@ A secure, production-ready OpenID Connect identity provider built with ASP.NET C
 ## Table of Contents
 
 - [Technology Stack](#technology-stack)
+- [How to use](#how-to-use)
 - [Building the Project](#building-the-project)
 - [Docker Container Deployment](#docker-container-deployment)
 - [Local Development Setup](#local-development-setup)
@@ -13,13 +14,16 @@ A secure, production-ready OpenID Connect identity provider built with ASP.NET C
 - [Security Logging and Investigation](#security-logging-and-investigation)
 - [Project Structure](#project-structure)
 - [Contributing](#contributing)
+- [docker hub repository](#docker-hub-repository)
+- [documentation](#documentation)
+- [License](#license)
 
 ## Technology Stack
 
 ### Core Technologies
 - **.NET 8.0** - Latest LTS version of .NET
 - **ASP.NET Core 8.0** - Web framework for building APIs
-- **OpenIddict 5.0** - OpenID Connect and OAuth 2.0 framework
+- **OpenIddict 7.1** - OpenID Connect and OAuth 2.0 framework
 - **Entity Framework Core 8.0** - ORM for database operations
 - **SQL Server** - Primary database for identity data and security logs
 
@@ -38,6 +42,10 @@ A secure, production-ready OpenID Connect identity provider built with ASP.NET C
 - **Swagger/OpenAPI** - API documentation
 - **System.CommandLine** - CLI tooling
 - **xUnit** - Testing framework
+
+## How to use
+
+you can find how to use the simple identity server in [identity provider integration guide](docs/identity-provider-integration-guide.md).
 
 ## Building the Project
 

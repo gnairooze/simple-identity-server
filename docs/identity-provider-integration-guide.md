@@ -70,6 +70,8 @@ The CLI command directly adds the client to the database, so no Identity Server 
 
 ## Step 2: Create Resource API
 
+sample existing project is [Resource.API](code\SimpleIdentityServer\Resource.API).
+
 ### 2.1 Create New .NET 8.0 Web API Project
 
 ```bash
@@ -344,6 +346,10 @@ builder.Services.AddHttpClient<ITokenValidationService, TokenValidationService>(
 ```
 
 ## Step 4: Create Client Application
+
+sample existing project is [Client.App](code\SimpleIdentityServer\Client.App).
+
+or you can create a new console application.
 
 ### 4.1 Create Console Client Application
 
