@@ -68,28 +68,20 @@ dotnet run -- app list
 
 The CLI command directly adds the client to the database, so no Identity Server restart is required. The client is immediately available for use. You can verify this by checking the application list or testing token requests directly.
 
-## Step 2: Create Resource API
+## Step 2: Configure Resource API
 
 sample existing project is [Resource.API](code\SimpleIdentityServer\Resource.API).
 
-### 2.1 Create New .NET 8.0 Web API Project
-
-```bash
-dotnet new webapi -n MyResourceApi
-cd MyResourceApi
-```
-
-### 2.2 Install Required NuGet Packages
+### 2.1 Install Required NuGet Packages
 
 ```bash
 dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer
-dotnet add package Microsoft.IdentityModel.Tokens
-dotnet add package System.IdentityModel.Tokens.Jwt
 dotnet add package OpenIddict.Validation.AspNetCore
 dotnet add package OpenIddict.Validation.ServerIntegration
+dotnet add package OpenIddict.Validation.SystemNetHttp
 ```
 
-### 2.3 Configure appsettings.json
+### 2.2 Configure appsettings.json
 
 ```json
 {
@@ -110,57 +102,32 @@ dotnet add package OpenIddict.Validation.ServerIntegration
 }
 ```
 
-### 2.4 Configure Program.cs
+### 2.3 Configure Program.cs
 
 ```csharp
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 using OpenIddict.Validation.AspNetCore;
-using OpenIddict.Validation.ServerIntegration;
 
-var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// Configure authentication to use OpenIddict validation
+builder.Services.AddAuthentication(OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme);
 
-// Configure JWT Authentication
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.Authority = builder.Configuration["IdentityServer:Authority"];
-        options.Audience = builder.Configuration["IdentityServer:Audience"];
-        options.RequireHttpsMetadata = false; // Set to true in production
-        
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["IdentityServer:Authority"],
-            ValidAudience = builder.Configuration["IdentityServer:Audience"]
-        };
-    });
-
-// Configure OpenIddict Validation (for introspection)
+// Configure OpenIddict Validation with introspection (required for encrypted tokens)
 builder.Services.AddOpenIddict()
     .AddValidation(options =>
     {
-        options.SetIssuer(builder.Configuration["IdentityServer:Authority"]);
-        options.AddAudiences(builder.Configuration["IdentityServer:Audience"]);
+        options.SetIssuer(builder.Configuration["IdentityServer:Authority"]!);
+        options.AddAudiences(builder.Configuration["IdentityServer:Audience"]!);
         
-        // Configure the validation handler to use introspection
+        // Configure the validation handler to use introspection for encrypted tokens
         options.UseIntrospection()
-               .SetClientId(builder.Configuration["IdentityServer:ClientId"])
-               .SetClientSecret(builder.Configuration["IdentityServer:ClientSecret"]);
-        
-        // Configure the validation handler to use the local server.
-        options.UseLocalServer();
+               .SetClientId(builder.Configuration["IdentityServer:ClientId"]!)
+               .SetClientSecret(builder.Configuration["IdentityServer:ClientSecret"]!);
         
         // Configure the validation handler to use ASP.NET Core.
         options.UseAspNetCore();
+        
+        // Configure the validation handler to use System.Net.Http for introspection.
+        options.UseSystemNetHttp();
     });
 
 builder.Services.AddAuthorization(options =>
@@ -189,9 +156,7 @@ app.MapControllers();
 app.Run();
 ```
 
-## Step 3: Implement Token Validation
-
-### 3.1 Create Protected API Controller
+## Step 3: Protect API Endpoints
 
 ```csharp
 using Microsoft.AspNetCore.Authorization;
@@ -247,102 +212,6 @@ public class DataController : ControllerBase
         });
     }
 }
-```
-
-### 3.2 Create Custom Token Validation Service
-
-```csharp
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Text.Json;
-
-namespace MyResourceApi.Services;
-
-public interface ITokenValidationService
-{
-    Task<bool> ValidateTokenAsync(string token);
-    Task<Dictionary<string, object>> GetTokenInfoAsync(string token);
-}
-
-public class TokenValidationService : ITokenValidationService
-{
-    private readonly HttpClient _httpClient;
-    private readonly IConfiguration _configuration;
-
-    public TokenValidationService(HttpClient httpClient, IConfiguration configuration)
-    {
-        _httpClient = httpClient;
-        _configuration = configuration;
-    }
-
-    public async Task<bool> ValidateTokenAsync(string token)
-    {
-        try
-        {
-            var request = new FormUrlEncodedContent(new[]
-            {
-                new KeyValuePair<string, string>("client_id", _configuration["IdentityServer:ClientId"]),
-                new KeyValuePair<string, string>("client_secret", _configuration["IdentityServer:ClientSecret"]),
-                new KeyValuePair<string, string>("token", token)
-            });
-
-            var response = await _httpClient.PostAsync(
-                _configuration["IdentityServer:IntrospectionEndpoint"], 
-                request);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync();
-                var result = JsonSerializer.Deserialize<Dictionary<string, object>>(content);
-                
-                return result?.ContainsKey("active") == true && 
-                       result["active"].ToString()?.ToLower() == "true";
-            }
-        }
-        catch (Exception ex)
-        {
-            // Log the exception
-            Console.WriteLine($"Token validation error: {ex.Message}");
-        }
-
-        return false;
-    }
-
-    public async Task<Dictionary<string, object>> GetTokenInfoAsync(string token)
-    {
-        try
-        {
-            var request = new FormUrlEncodedContent(new[]
-            {
-                new KeyValuePair<string, string>("client_id", _configuration["IdentityServer:ClientId"]),
-                new KeyValuePair<string, string>("client_secret", _configuration["IdentityServer:ClientSecret"]),
-                new KeyValuePair<string, string>("token", token)
-            });
-
-            var response = await _httpClient.PostAsync(
-                _configuration["IdentityServer:IntrospectionEndpoint"], 
-                request);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var content = await response.Content.ReadAsStringAsync();
-                return JsonSerializer.Deserialize<Dictionary<string, object>>(content) ?? new Dictionary<string, object>();
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Token info retrieval error: {ex.Message}");
-        }
-
-        return new Dictionary<string, object>();
-    }
-}
-```
-
-Register the service in `Program.cs`:
-
-```csharp
-builder.Services.AddHttpClient<ITokenValidationService, TokenValidationService>();
 ```
 
 ## Step 4: Create Client Application
