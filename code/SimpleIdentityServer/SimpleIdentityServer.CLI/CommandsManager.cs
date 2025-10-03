@@ -31,7 +31,7 @@ namespace SimpleIdentityServer.CLI
             addAppCommand.AddOption(new Option<string>("--client-id", "Client ID") { IsRequired = true });
             addAppCommand.AddOption(new Option<string>("--client-secret", "Client secret") { IsRequired = true });
             addAppCommand.AddOption(new Option<string>("--display-name", "Display name") { IsRequired = true });
-            addAppCommand.AddOption(new Option<string[]>("--permissions", "Permissions (space-separated)") { IsRequired = true });
+            addAppCommand.AddOption(new Option<string[]>("--permissions", "Permissions can be repeated for multiple permissions") { IsRequired = true });
             addAppCommand.SetHandler(appMgr.AddApplication,
                 addAppCommand.Options.OfType<Option<string>>().ElementAt(0),
                 addAppCommand.Options.OfType<Option<string>>().ElementAt(1),
@@ -43,7 +43,7 @@ namespace SimpleIdentityServer.CLI
             updateAppCommand.AddOption(new Option<string>("--client-id", "Client ID") { IsRequired = true });
             updateAppCommand.AddOption(new Option<string>("--client-secret", "Client secret"));
             updateAppCommand.AddOption(new Option<string>("--display-name", "Display name"));
-            updateAppCommand.AddOption(new Option<string[]>("--permissions", "Permissions (space-separated)"));
+            updateAppCommand.AddOption(new Option<string[]>("--permissions", "Permissions can be repeated for multiple permissions"));
             updateAppCommand.SetHandler(appMgr.UpdateApplication,
                 updateAppCommand.Options.OfType<Option<string>>().ElementAt(0),
                 updateAppCommand.Options.OfType<Option<string>>().ElementAt(1),
@@ -71,7 +71,7 @@ namespace SimpleIdentityServer.CLI
             var addScopeCommand = new Command("add", "Add a new scope");
             addScopeCommand.AddOption(new Option<string>("--name", "Scope name") { IsRequired = true });
             addScopeCommand.AddOption(new Option<string>("--display-name", "Display name") { IsRequired = true });
-            addScopeCommand.AddOption(new Option<string[]>("--resources", "Resources (space-separated)") { IsRequired = true });
+            addScopeCommand.AddOption(new Option<string[]>("--resources", "Resources can be repeated for multiple resources") { IsRequired = true });
             addScopeCommand.SetHandler(scpMgr.AddScope,
                 addScopeCommand.Options.OfType<Option<string>>().ElementAt(0),
                 addScopeCommand.Options.OfType<Option<string>>().ElementAt(1),
@@ -81,7 +81,7 @@ namespace SimpleIdentityServer.CLI
             var updateScopeCommand = new Command("update", "Update an existing scope");
             updateScopeCommand.AddOption(new Option<string>("--name", "Scope name") { IsRequired = true });
             updateScopeCommand.AddOption(new Option<string>("--display-name", "Display name"));
-            updateScopeCommand.AddOption(new Option<string[]>("--resources", "Resources (space-separated)"));
+            updateScopeCommand.AddOption(new Option<string[]>("--resources", "Resources can be repeated for multiple resources"));
             updateScopeCommand.SetHandler(scpMgr.UpdateScope,
                 updateScopeCommand.Options.OfType<Option<string>>().ElementAt(0),
                 updateScopeCommand.Options.OfType<Option<string>>().ElementAt(1),

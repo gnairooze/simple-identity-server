@@ -43,12 +43,12 @@ dotnet run -- app get --client-id "your-client-id"
 
 #### Add new application
 ```bash
-dotnet run -- app add --client-id "new-client" --client-secret "secret123" --display-name "New Client" --permissions "ept:token" "ept:introspection" "gt:client_credentials" "scp:openid" "scp:email" "scp:profile" "scp:api1.read"
+dotnet run -- app add --client-id "new-client" --client-secret "secret123" --display-name "New Client" --permissions "ept:token" --permissions "ept:introspection" --permissions "gt:client_credentials" --permissions "scp:openid" --permissions "scp:email" --permissions "scp:profile" --permissions "scp:api1.read"
 ```
 
 #### Update application
 ```bash
-dotnet run -- app update --client-id "existing-client" --display-name "Updated Name" --permissions "ept:token" "ept:introspection" "gt:client_credentials" "scp:email" "scp:profile" "scp:api1.read"
+dotnet run -- app update --client-id "existing-client" --display-name "Updated Name" --permissions "ept:token" --permissions "ept:introspection" --permissions "gt:client_credentials" --permissions "scp:email" --permissions "scp:profile" --permissions "scp:api1.read"
 ```
 
 #### Delete application

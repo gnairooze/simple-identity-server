@@ -578,7 +578,7 @@ dotnet run -- app add \
   --client-id "new-client" \
   --client-secret "secret123" \
   --display-name "New Client Application" \
-  --permissions "ept:token" "ept:introspection" "gt:client_credentials" "scp:openid" "scp:email" "scp:profile" "scp:api1.read"
+  --permissions "ept:token" --permissions "ept:introspection" --permissions "gt:client_credentials" --permissions "scp:openid" --permissions "scp:email" --permissions "scp:profile" --permissions "scp:api1.read"
 ```
 
 **Update existing application:**
@@ -586,7 +586,7 @@ dotnet run -- app add \
 dotnet run -- app update \
   --client-id "existing-client" \
   --display-name "Updated Name" \
-  --permissions "ept:token" "ept:introspection" "gt:client_credentials" "scp:api1.read" "scp:api1.write"
+  --permissions "ept:token" --permissions "ept:introspection" --permissions "gt:client_credentials" --permissions "scp:api1.read" --permissions "scp:api1.write"
 ```
 
 **Delete application:**
