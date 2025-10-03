@@ -152,3 +152,31 @@ docker run -d -p 8091:443 -v ./certs:/app/certs -v ./production.env:/app/product
 ```bash
 docker-compose up -d
 ```
+
+## endpoints
+
+the ssl sertificates issued to `identity.dev.test`
+you can add the following line to your hosts file
+127.0.0.1 identity.dev.test
+
+base url can be `https://localhost:8091` or `https://identity.dev.test:8091`
+
+[postman collection](https://github.com/gnairooze/simple-identity-server/blob/main/docs/SimpleIdentityServer.postman_collection.json) of sample requests
+
+### openid configuration
+
+GET {{baseurl}}/.well-known/openid-configuration
+
+GET {{baseURL}}/.well-known/jwks
+
+### get-token
+
+{{baseURL}}/connect/token
+
+### validate token
+
+{{baseURL}}/connect/introspect
+
+## how to integrate
+
+[integration guide](https://github.com/gnairooze/simple-identity-server/blob/main/docs/identity-provider-integration-guide.md)
