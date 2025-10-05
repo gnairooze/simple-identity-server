@@ -84,6 +84,26 @@ public class TokenController : ControllerBase
             // Add custom claims based on the client
             identity.AddClaim("client_id", clientId);
 
+            // Set the list of scopes granted to the client application in the access token.
+            var scopesToGrant = request.GetScopes();
+            if (!scopesToGrant.Any())
+            {
+                // If no scopes requested, grant default scopes based on client permissions
+                var clientPermissions = await _applicationManager.GetPermissionsAsync(application);
+                var defaultScopes = clientPermissions
+                    .Where(p => p.StartsWith("scp:"))
+                    .Select(p => p.Substring(4)) // Remove "scp:" prefix
+                    .ToList();
+                
+                scopesToGrant = defaultScopes.ToImmutableArray();
+            }
+
+            // Add scope claims to the identity so they appear in the token
+            foreach (var scope in scopesToGrant)
+            {
+                identity.AddClaim(OpenIddictConstants.Claims.Scope, scope);
+            }
+
             // Add role-based claims
             if (clientId == "service-api")
             {
@@ -103,20 +123,6 @@ public class TokenController : ControllerBase
 
             // Create the ClaimsPrincipal
             var principal = new ClaimsPrincipal(identity);
-
-            // Set the list of scopes granted to the client application in the access token.
-            var scopesToGrant = request.GetScopes();
-            if (!scopesToGrant.Any())
-            {
-                // If no scopes requested, grant default scopes based on client permissions
-                var clientPermissions = await _applicationManager.GetPermissionsAsync(application);
-                var defaultScopes = clientPermissions
-                    .Where(p => p.StartsWith("scp:"))
-                    .Select(p => p.Substring(4)) // Remove "scp:" prefix
-                    .ToList();
-                
-                scopesToGrant = defaultScopes.ToImmutableArray();
-            }
             
             principal.SetScopes(scopesToGrant);
 
