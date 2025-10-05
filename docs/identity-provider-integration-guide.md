@@ -63,7 +63,7 @@ Use the Simple Identity Server CLI to add your new client:
 
 ```bash
 cd code/SimpleIdentityServer/SimpleIdentityServer.CLI
-dotnet run -- app add --client-id "my-resource-api-client" --client-secret "your-secure-secret-here" --display-name "My Resource API Client" --permissions "ept:token" "ept:introspection" "gt:client_credentials" "scp:email" "scp:profile" "scp:roles" "scp:api1.read" "scp:api1.write"
+dotnet run -- app add --client-id "my-resource-api-client" --client-secret "your-secure-secret-here" --display-name "My Resource API Client" --permissions "ept:token" --permissions "ept:introspection" --permissions "gt:client_credentials" --permissions "scp:email" --permissions "scp:profile" --permissions "scp:roles" --permissions "scp:api1.read" --permissions "scp:api1.write"
 ```
 
 You can also verify the client was created successfully:
