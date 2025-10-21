@@ -8,9 +8,10 @@ This guide explains how to integrate the Simple Identity Server with a .NET 8.0 
   - [Table of Contents](#table-of-contents)
   - [Overview](#overview)
   - [Architecture](#architecture)
-  - [Step 1: Register Client in Identity Provider](#step-1-register-client-in-identity-provider)
-    - [1.1 Add New Client Using CLI](#11-add-new-client-using-cli)
-    - [1.2 Verify Client Registration](#12-verify-client-registration)
+  - [Step 1: Configure Identity Server](#step-1-configure-identity-server)
+    - [1.1 Add Resource API Scopes](#11-add-resource-api-scopes)
+    - [1.2 Add New Client Using CLI](#12-add-new-client-using-cli)
+    - [1.3 Verify Client Registration](#13-verify-client-registration)
   - [Step 2: Configure Resource API](#step-2-configure-resource-api)
     - [2.1 Install Required NuGet Packages](#21-install-required-nuget-packages)
     - [2.2 Configure appsettings.json](#22-configure-appsettingsjson)
@@ -59,7 +60,7 @@ This guide demonstrates how to:
 
 Use the Simple Identity Server CLI.
 
-### 1.1. Add Resource API Scopes
+### 1.1 Add Resource API Scopes
 
 ```bash
 dotnet SimpleIdentityServer.CLI.dll scope add --name "your-resource-api.scope-1" --display-name "scope 1 of your resource api" --resources "your-resource-api"
@@ -148,7 +149,6 @@ dotnet add package OpenIddict.Validation.SystemNetHttp
 
 ```csharp
 using OpenIddict.Validation.AspNetCore;
-
 
 // Configure authentication to use OpenIddict validation
 builder.Services.AddAuthentication(OpenIddictValidationAspNetCoreDefaults.AuthenticationScheme);
