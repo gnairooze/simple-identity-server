@@ -136,7 +136,7 @@ dotnet add package OpenIddict.Validation.SystemNetHttp
   },
   "AllowedHosts": "*",
   "IdentityServer": {
-    "Authority": "https://localhost:7443",
+    "Authority": "https://localhost:7443/",
     "Audience": "api1",
     "IntrospectionEndpoint": "https://localhost:7443/connect/introspect",
     "ClientId": "my-resource-api-client",
@@ -144,6 +144,8 @@ dotnet add package OpenIddict.Validation.SystemNetHttp
   }
 }
 ```
+
+the authority url should end in forward slash.
 
 ### 2.3 Configure Program.cs
 
