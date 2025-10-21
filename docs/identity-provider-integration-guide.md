@@ -55,21 +55,48 @@ This guide demonstrates how to:
 └─────────────────┘    └──────────────────┘    └─────────────────┘
 ```
 
-## Step 1: Register Client in Identity Provider
+## Step 1: Configure Identity Server
 
-### 1.1 Add New Client Using CLI
+Use the Simple Identity Server CLI.
 
-Use the Simple Identity Server CLI to add your new client:
+### 1.1. Add Resource API Scopes
 
 ```bash
-cd code/SimpleIdentityServer/SimpleIdentityServer.CLI
-dotnet run -- app add --client-id "my-resource-api-client" --client-secret "your-secure-secret-here" --display-name "My Resource API Client" --permissions "ept:token" --permissions "ept:introspection" --permissions "gt:client_credentials" --permissions "scp:email" --permissions "scp:profile" --permissions "scp:roles" --permissions "scp:api1.read" --permissions "scp:api1.write"
+dotnet SimpleIdentityServer.CLI.dll scope add --name "your-resource-api.scope-1" --display-name "scope 1 of your resource api" --resources "your-resource-api"
+
+dotnet SimpleIdentityServer.CLI.dll scope add --name "your-resource-api.scope-2" --display-name "scope 2 of your resource api" --resources "your-resource-api"
 ```
+
+make sure that scope name written with the convention `your-resource-api.scope` and the resource api before the dot matches exactly the reources.
+
+### 1.2 Add New Clients Using CLI
+
+**adding clients using your resource api**
+they are the applications that uses your resource api.
+
+```bash
+dotnet SimpleIdentityServer.CLI.dll app add --client-id "your-resource-api-client" --client-secret "your-secure-secret-here" --display-name "Your Resource API Client" --permissions "ept:token" --permissions "ept:introspection" --permissions "gt:client_credentials" --permissions "scp:your-resource-api.scope-1" --permissions "scp:your-resource-api.scope-2"
+```
+
+make soure the permissions written with the convention `scp:scope-name-exactly-as-defined-in-previous-step`.
+
+**adding your resource api itself as client**
+it is your resource api itself to validate the token using introspect endpoint.
+
+```bash
+dotnet SimpleIdentityServer.CLI.dll app add --client-id "your-resource-api" --client-secret "your-secure-secret-here" --display-name "your-resource-api" --permissions "ept:introspection"
+```
+
+make sure that the client-id matches exactly the resouce added in scopes definition.
+
+### 1.3 Verify Client Registration
+
+The CLI command directly adds the client to the database, so no Identity Server restart is required. The client is immediately available for use. You can verify this by checking the application list or testing token requests directly.
 
 You can also verify the client was created successfully:
 
 ```bash
-dotnet run -- app get --client-id "my-resource-api-client"
+dotnet run -- app get --client-id "your-resource-api-client"
 ```
 
 Or list all applications:
@@ -82,10 +109,6 @@ dotnet run -- app list
 - `ept:` for endpoints (e.g., `ept:token`, `ept:introspection`)
 - `gt:` for grant types (e.g., `gt:client_credentials`)
 - `scp:` for scopes (e.g., `scp:email`, `scp:api1.read`)
-
-### 1.2 Verify Client Registration
-
-The CLI command directly adds the client to the database, so no Identity Server restart is required. The client is immediately available for use. You can verify this by checking the application list or testing token requests directly.
 
 ## Step 2: Configure Resource API
 
