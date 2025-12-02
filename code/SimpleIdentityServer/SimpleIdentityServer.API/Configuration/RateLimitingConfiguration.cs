@@ -52,6 +52,18 @@ public static class RateLimitingConfiguration
                         Window = TimeSpan.FromMinutes(rateLimitingConfig.IntrospectionEndpoint.WindowMinutes)
                     }));
 
+            // Authentication endpoints rate limiting
+            options.AddPolicy("AuthPolicy", httpContext =>
+                RateLimitPartition.GetFixedWindowLimiter(
+                    partitionKey: GetPartitionKey(httpContext) ?? "anonymous",
+                    factory: _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = rateLimitingConfig.AuthenticationEndpoints.PermitLimit,
+                        Window = TimeSpan.FromMinutes(rateLimitingConfig.AuthenticationEndpoints.WindowMinutes),
+                        QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                        QueueLimit = 2
+                    }));
+
             // Configure what happens when rate limit is exceeded
             options.OnRejected = async (context, token) =>
             {

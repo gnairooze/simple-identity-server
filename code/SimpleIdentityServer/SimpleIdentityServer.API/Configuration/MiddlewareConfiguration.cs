@@ -30,6 +30,9 @@ public static class MiddlewareConfiguration
 
         app.UseHttpsRedirection();
 
+        // Enable static files for CSS, JS, etc.
+        app.UseStaticFiles();
+
         // Add CORS middleware - must be after UseHttpsRedirection
         app.UseCors("ProductionCorsPolicy");
 
@@ -38,6 +41,9 @@ public static class MiddlewareConfiguration
 
         // Add rate limiting middleware - must be before authentication
         app.UseRateLimiter();
+
+        // Enable routing
+        app.UseRouting();
 
         app.UseAuthentication();
         app.UseAuthorization();

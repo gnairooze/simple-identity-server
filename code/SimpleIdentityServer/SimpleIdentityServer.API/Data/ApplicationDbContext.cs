@@ -1,9 +1,9 @@
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using OpenIddict.EntityFrameworkCore.Models;
 
-namespace SimpleIdentityServer.Data;
+namespace SimpleIdentityServer.API.Data;
 
-public class ApplicationDbContext : DbContext
+public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)
@@ -14,7 +14,17 @@ public class ApplicationDbContext : DbContext
     {
         base.OnModelCreating(builder);
 
+        // Configure Identity tables
+        builder.Entity<ApplicationUser>(entity =>
+        {
+            entity.ToTable("Users");
+            entity.HasIndex(e => e.Email).IsUnique();
+            entity.Property(e => e.Email).IsRequired().HasMaxLength(256);
+            entity.Property(e => e.UserName).IsRequired().HasMaxLength(256);
+        });
+
         // Configure OpenIddict entities
         builder.UseOpenIddict();
     }
-} 
+}
+ 

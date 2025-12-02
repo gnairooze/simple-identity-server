@@ -55,4 +55,47 @@ public static class EnvironmentVariablesNames
     /// Used to specify the SQL Server SA account password.
     /// </summary>
     public static readonly string DatabasePassword = "SIMPLE_IDENTITY_SERVER_DB_PASSWORD";
+
+    /// <summary>
+    /// SMTP server hostname environment variable key.
+    /// Used to specify the SMTP server for sending emails.
+    /// </summary>
+    public static readonly string EmailSmtpHost = "SIMPLE_IDENTITY_SERVER_EMAIL_SMTP_HOST";
+
+    /// <summary>
+    /// SMTP server port environment variable key.
+    /// Used to specify the SMTP server port (typically 587 for TLS).
+    /// </summary>
+    public static readonly string EmailSmtpPort = "SIMPLE_IDENTITY_SERVER_EMAIL_SMTP_PORT";
+
+    /// <summary>
+    /// SMTP username environment variable key.
+    /// Used to specify the username for SMTP authentication.
+    /// </summary>
+    public static readonly string EmailUsername = "SIMPLE_IDENTITY_SERVER_EMAIL_USERNAME";
+
+    /// <summary>
+    /// SMTP password environment variable key.
+    /// Used to specify the password for SMTP authentication.
+    /// </summary>
+    public static readonly string EmailPassword = "SIMPLE_IDENTITY_SERVER_EMAIL_PASSWORD";
+
+    /// <summary>
+    /// Email from address environment variable key.
+    /// Used to specify the sender email address.
+    /// </summary>
+    public static readonly string EmailFromAddress = "SIMPLE_IDENTITY_SERVER_EMAIL_FROM_ADDRESS";
+
+    /// <summary>
+    /// Email from name environment variable key.
+    /// Used to specify the sender display name.
+    /// </summary>
+    public static readonly string EmailFromName = "SIMPLE_IDENTITY_SERVER_EMAIL_FROM_NAME";
+
+    /// <summary>
+    /// Email development mode environment variable key.
+    /// Used to enable/disable development mode (logs emails instead of sending).
+    /// Set to "false" to enable production email sending.
+    /// </summary>
+    public static readonly string EmailDevelopmentMode = "SIMPLE_IDENTITY_SERVER_EMAIL_DEVELOPMENT_MODE";
 }

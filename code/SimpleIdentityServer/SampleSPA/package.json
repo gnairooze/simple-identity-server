@@ -1,0 +1,21 @@
+{
+  "name": "simple-identity-server-sample-spa",
+  "version": "1.0.0",
+  "description": "Sample SPA demonstrating OAuth 2.0 Authorization Code flow with PKCE",
+  "main": "index.html",
+  "scripts": {
+    "start": "node serve.js",
+    "serve": "node serve.js"
+  },
+  "keywords": [
+    "oauth2",
+    "pkce",
+    "spa",
+    "authentication",
+    "authorization-code"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {}
+}
+

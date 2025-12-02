@@ -35,6 +35,15 @@ public class RateLimitingOptions
     };
 
     /// <summary>
+    /// Authentication endpoints specific rate limiting settings
+    /// </summary>
+    public RateLimitSettings AuthenticationEndpoints { get; set; } = new()
+    {
+        PermitLimit = 5,
+        WindowMinutes = 5
+    };
+
+    /// <summary>
     /// Security monitoring settings
     /// </summary>
     public SecurityMonitoringSettings SecurityMonitoring { get; set; } = new();

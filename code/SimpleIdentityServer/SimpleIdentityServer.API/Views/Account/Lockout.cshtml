@@ -1,0 +1,18 @@
+@{
+    ViewData["Title"] = "Account Locked";
+    Layout = "_AuthLayout";
+}
+
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1>Account Locked</h1>
+            <p>Your account has been temporarily locked due to multiple failed login attempts. Please try again later.</p>
+        </div>
+
+        <div class="auth-links">
+            <a asp-action="ForgotPassword" class="link-primary">Reset Password</a>
+        </div>
+    </div>
+</div>
+

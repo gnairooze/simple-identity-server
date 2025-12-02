@@ -57,6 +57,24 @@ public class OpenIddictOptions
     public string ConfigurationEndpointUri { get; set; } = string.Empty;
 
     /// <summary>
+    /// Authorization endpoint URI
+    /// </summary>
+    [Required(ErrorMessage = "Authorization endpoint URI is required")]
+    public string AuthorizationEndpointUri { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Userinfo endpoint URI
+    /// </summary>
+    [Required(ErrorMessage = "User info endpoint URI is required")]
+    public string UserinfoEndpointUri { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Logout endpoint URI
+    /// </summary>
+    [Required(ErrorMessage = "Logout endpoint URI is required")]
+    public string LogoutEndpointUri { get; set; } = string.Empty;
+
+    /// <summary>
     /// Access token lifetime in minutes
     /// </summary>
     [Range(1, 1440, ErrorMessage = "Access token lifetime must be between 1 and 1440 minutes")]
@@ -67,6 +85,12 @@ public class OpenIddictOptions
     /// </summary>
     [Range(1, 365, ErrorMessage = "Refresh token lifetime must be between 1 and 365 days")]
     public int RefreshTokenLifetimeDays { get; set; }
+
+    /// <summary>
+    /// Authorization code lifetime in minutes
+    /// </summary>
+    [Range(1, 60, ErrorMessage = "Authorization code lifetime must be between 1 and 60 minutes")]
+    public int AuthorizationCodeLifetimeMinutes { get; set; } = 10;
 }
 
 public class CertificateOptions

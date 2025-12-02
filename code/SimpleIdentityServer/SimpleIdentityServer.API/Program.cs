@@ -1,5 +1,5 @@
 using SimpleIdentityServer.API.Configuration;
-using SimpleIdentityServer.Data;
+using SimpleIdentityServer.API.Data;
 using SimpleIdentityServer.Services;
 
 var builder = WebApplication.CreateBuilder(args);

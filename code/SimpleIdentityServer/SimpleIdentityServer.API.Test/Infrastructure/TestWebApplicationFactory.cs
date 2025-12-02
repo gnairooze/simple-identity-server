@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using SimpleIdentityServer.Data;
+using SimpleIdentityServer.API.Data;
 using OpenIddict.Abstractions;
 using SimpleIdentityServer.API.Controllers;
 
@@ -16,21 +16,6 @@ public class TestWebApplicationFactory : WebApplicationFactory<TokenController>
     {
         builder.UseEnvironment("Development"); // Use Development instead of Test to avoid production checks
         
-        builder.ConfigureAppConfiguration((context, config) =>
-        {
-            config.AddJsonFile("appsettings.Test.json", optional: false, reloadOnChange: true);
-            
-            // Override configuration values for testing
-            config.AddInMemoryCollection(new Dictionary<string, string>
-            {
-                ["ConnectionStrings:DefaultConnection"] = "DataSource=:memory:",
-                ["ConnectionStrings:SecurityLogsConnection"] = "DataSource=:memory:",
-                ["Application:Certificates:Password"] = "",
-                ["Application:Certificates:EncryptionCertificatePath"] = "",
-                ["Application:Certificates:SigningCertificatePath"] = ""
-            });
-        });
-
         builder.ConfigureServices(services =>
         {
             // Remove the existing database context registration

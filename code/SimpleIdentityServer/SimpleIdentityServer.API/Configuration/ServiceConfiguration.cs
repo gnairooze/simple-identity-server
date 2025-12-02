@@ -1,7 +1,8 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
+using SimpleIdentityServer.API.Data;
 using SimpleIdentityServer.API.Services;
-using SimpleIdentityServer.Data;
 using SimpleIdentityServer.Services;
 
 namespace SimpleIdentityServer.API.Configuration;
@@ -10,11 +11,19 @@ public static class ServiceConfiguration
 {
     public static void ConfigureServices(WebApplicationBuilder builder)
     {
-        // Add controllers with configuration
-        builder.Services.AddControllers(options =>
+        // Add controllers with views for authentication pages
+        builder.Services.AddControllersWithViews(options =>
         {
             // Limit request body size to 1MB to prevent large payload attacks
             options.MaxModelBindingCollectionSize = 1000;
+        });
+
+        // Add antiforgery token support
+        builder.Services.AddAntiforgery(options =>
+        {
+            options.HeaderName = "X-CSRF-TOKEN";
+            options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+            options.Cookie.SameSite = SameSiteMode.Strict;
         });
 
         // Configure request size limits
@@ -46,9 +55,14 @@ public static class ServiceConfiguration
         // Configure OpenIddict
         ConfigureOpenIddict(builder);
 
+        // Configure email options
+        builder.Services.Configure<EmailOptions>(
+            builder.Configuration.GetSection(EmailOptions.SectionName));
+
         // Register custom services
         builder.Services.AddScoped<IClientService, ClientService>();
         builder.Services.AddScoped<IScopeService, ScopeService>();
+        builder.Services.AddScoped<IEmailService, EmailService>();
     }
 
     private static void ConfigureKestrel(WebApplicationBuilder builder)
@@ -83,11 +97,11 @@ public static class ServiceConfiguration
             {
                 sqlOptions.CommandTimeout(databaseOptions.CommandTimeoutSeconds);
                 sqlOptions.EnableRetryOnFailure(
-                    maxRetryCount: databaseOptions.MaxRetryCount, 
-                    maxRetryDelay: TimeSpan.FromSeconds(databaseOptions.MaxRetryDelaySeconds), 
+                    maxRetryCount: databaseOptions.MaxRetryCount,
+                    maxRetryDelay: TimeSpan.FromSeconds(databaseOptions.MaxRetryDelaySeconds),
                     errorNumbersToAdd: null);
             });
-            
+
             // Configure OpenIddict to use Entity Framework Core as the default store
             options.UseOpenIddict();
         });
@@ -115,35 +129,59 @@ public static class ServiceConfiguration
             })
             .AddServer(options =>
             {
+                // Configure endpoints
                 options
+                    .SetAuthorizationEndpointUris(openIddictOptions.AuthorizationEndpointUri)
                     .SetTokenEndpointUris(openIddictOptions.TokenEndpointUri)
                     .SetIntrospectionEndpointUris(openIddictOptions.IntrospectionEndpointUri)
                     .SetConfigurationEndpointUris(openIddictOptions.ConfigurationEndpointUri);
 
-                // Enable the client credentials flow
-                options.AllowClientCredentialsFlow();
+                // Enable flows
+                options.AllowClientCredentialsFlow()
+                       .AllowAuthorizationCodeFlow()
+                       .RequireProofKeyForCodeExchange(); // Enforce PKCE
 
                 // Register the signing and encryption credentials
-
-                // use certificates from configuration
                 options.AddEncryptionCertificate(CertificateManager.GetEncryptionCertificate(certificateOptions))
                     .AddSigningCertificate(CertificateManager.GetSigningCertificate(certificateOptions));
 
-                // Register the ASP.NET Core host and configure the ASP.NET Core options
+                // Register the ASP.NET Core host and configure options
                 options.UseAspNetCore()
+                       .EnableAuthorizationEndpointPassthrough()
                        .EnableTokenEndpointPassthrough();
 
-                // Configure the JWT handler
-                options.UseAspNetCore();
-
-                // Configure token lifetimes from configuration
+                // Configure token lifetimes
                 options.SetAccessTokenLifetime(TimeSpan.FromMinutes(openIddictOptions.AccessTokenLifetimeMinutes))
-                       .SetRefreshTokenLifetime(TimeSpan.FromDays(openIddictOptions.RefreshTokenLifetimeDays));
+                       .SetRefreshTokenLifetime(TimeSpan.FromDays(openIddictOptions.RefreshTokenLifetimeDays))
+                       .SetAuthorizationCodeLifetime(TimeSpan.FromMinutes(openIddictOptions.AuthorizationCodeLifetimeMinutes));
             })
             .AddValidation(options =>
             {
                 options.UseLocalServer();
                 options.UseAspNetCore();
             });
+
+        // Add Identity services for user management
+        builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+        {
+            // Password settings
+            options.Password.RequireDigit = true;
+            options.Password.RequireLowercase = true;
+            options.Password.RequireNonAlphanumeric = true;
+            options.Password.RequireUppercase = true;
+            options.Password.RequiredLength = 8;
+            options.Password.RequiredUniqueChars = 1;
+
+            // Lockout settings
+            options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+            options.Lockout.MaxFailedAccessAttempts = 5;
+            options.Lockout.AllowedForNewUsers = true;
+
+            // User settings
+            options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
+            options.User.RequireUniqueEmail = true;
+        })
+        .AddEntityFrameworkStores<ApplicationDbContext>()
+        .AddDefaultTokenProviders();
     }
 }

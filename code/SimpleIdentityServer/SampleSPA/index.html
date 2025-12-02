@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sample SPA - OAuth 2.0 Authorization Code Flow</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔐 OAuth 2.0 Sample SPA</h1>
+            <p class="subtitle">Demonstration of Authorization Code Flow with PKCE</p>
+        </header>
+
+        <main id="main-content">
+            <!-- Not Logged In State -->
+            <section id="not-authenticated" class="card">
+                <h2>Welcome!</h2>
+                <p>This is a sample Single Page Application demonstrating the OAuth 2.0 Authorization Code flow with PKCE (Proof Key for Code Exchange).</p>
+
+                <div class="info-box">
+                    <h3>What happens when you click Login?</h3>
+                    <ol>
+                        <li>Application generates a secure PKCE code verifier and challenge</li>
+                        <li>You're redirected to the Identity Server's login page</li>
+                        <li>After successful login, you're redirected back with an authorization code</li>
+                        <li>Application exchanges the code for access and ID tokens</li>
+                        <li>Your user information is displayed</li>
+                    </ol>
+                </div>
+
+                <div class="actions">
+                    <button id="login-btn" class="btn btn-primary">
+                        <span>🔓</span> Login with OAuth 2.0
+                    </button>
+                </div>
+
+                <div class="config-info">
+                    <h3>Configuration</h3>
+                    <div class="config-grid">
+                        <div><strong>Client ID:</strong> <code id="config-client-id">-</code></div>
+                        <div><strong>Authorization Endpoint:</strong> <code id="config-auth-endpoint">-</code></div>
+                        <div><strong>Token Endpoint:</strong> <code id="config-token-endpoint">-</code></div>
+                        <div><strong>Redirect URI:</strong> <code id="config-redirect-uri">-</code></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Logged In State -->
+            <section id="authenticated" class="card" style="display: none;">
+                <div class="user-header">
+                    <div class="user-avatar">
+                        <span id="user-initials">U</span>
+                    </div>
+                    <div class="user-info">
+                        <h2 id="user-name">User Name</h2>
+                        <p id="user-email" class="user-email">user@example.com</p>
+                    </div>
+                </div>
+
+                <div class="token-info">
+                    <h3>Token Information</h3>
+                    <div class="token-details">
+                        <div class="token-item">
+                            <strong>Access Token:</strong>
+                            <div class="token-preview" id="access-token-preview">-</div>
+                            <button class="btn-copy" data-token="access">Copy Full Token</button>
+                        </div>
+                        <div class="token-item">
+                            <strong>ID Token:</strong>
+                            <div class="token-preview" id="id-token-preview">-</div>
+                            <button class="btn-copy" data-token="id">Copy Full Token</button>
+                        </div>
+                        <div class="token-item">
+                            <strong>Token Type:</strong> <span id="token-type">-</span>
+                        </div>
+                        <div class="token-item">
+                            <strong>Expires In:</strong> <span id="expires-in">-</span> seconds
+                        </div>
+                    </div>
+                </div>
+
+                <div class="claims-info">
+                    <h3>User Claims (from ID Token)</h3>
+                    <div id="claims-list" class="claims-grid">
+                        <!-- Claims will be populated here -->
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button id="refresh-btn" class="btn btn-secondary">
+                        <span>🔄</span> Refresh User Info
+                    </button>
+                    <button id="logout-btn" class="btn btn-danger">
+                        <span>🔒</span> Logout
+                    </button>
+                </div>
+            </section>
+
+            <!-- Loading State -->
+            <section id="loading" class="card" style="display: none;">
+                <div class="loading-spinner"></div>
+                <p>Processing authentication...</p>
+            </section>
+
+            <!-- Error State -->
+            <section id="error" class="card error-card" style="display: none;">
+                <h2>❌ Authentication Error</h2>
+                <p id="error-message" class="error-message">An error occurred during authentication.</p>
+                <button id="retry-btn" class="btn btn-primary">Try Again</button>
+            </section>
+        </main>
+
+        <footer>
+            <p>Sample SPA for Simple Identity Server | <a href="https://github.com/yourusername/simple-identity-server" target="_blank">GitHub</a></p>
+            <p class="small-text">This is a demonstration application. Do not use in production without proper security review.</p>
+        </footer>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
+
