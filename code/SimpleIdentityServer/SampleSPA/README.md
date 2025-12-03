@@ -184,6 +184,31 @@ Fetches user information from the userinfo endpoint.
 
 ## Troubleshooting
 
+### JSON Parsing Error / "Invalid start of a value" Error
+
+**Error**: `System.Text.Json.JsonReaderException: 'h' is an invalid start of a value`
+
+**Cause**: OpenIddict expects redirect URIs to be stored as JSON arrays in the database, but they may be stored as plain strings.
+
+**Solution**:
+1. Run the diagnostic script to check your database:
+   ```sql
+   -- In SQL Server Management Studio
+   -- Run: SampleSPA/diagnose.sql
+   ```
+
+2. Fix the issue by running the setup script:
+   ```sql
+   -- In SQL Server Management Studio
+   -- Run: SampleSPA/setup-client.sql
+   ```
+
+3. Restart your Identity Server
+
+4. Try logging in again
+
+See `fix-database-issue.md` for detailed information about this issue.
+
 ### "Invalid redirect URI" Error
 
 Make sure the redirect URI in your configuration exactly matches the one registered in the Identity Server.
