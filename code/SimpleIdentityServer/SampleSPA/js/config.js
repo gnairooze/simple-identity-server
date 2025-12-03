@@ -16,7 +16,9 @@ export const config = {
     // OAuth 2.0 Parameters
     redirectUri: window.location.origin + '/callback.html',
     postLogoutRedirectUri: window.location.origin + '/index.html',
-    scope: 'openid profile email roles',
+    // Scopes: 'openid' is required, 'profile' and 'email' provide user info
+    // Note: 'roles' scope requires additional database setup (run fix-scopes.sql)
+    scope: 'openid profile email',
 
     // Response Type (use 'code' for Authorization Code flow)
     responseType: 'code'

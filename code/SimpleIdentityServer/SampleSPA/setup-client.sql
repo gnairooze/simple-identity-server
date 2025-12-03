@@ -4,8 +4,9 @@
 USE [SimpleIdentityServer]
 GO
 
--- First, let's check and fix any malformed RedirectUris or PostLogoutRedirectUris
--- OpenIddict requires these to be JSON arrays, not plain strings
+-- =============================================
+-- STEP 1: Fix malformed redirect URIs
+-- =============================================
 
 PRINT 'Checking for malformed redirect URIs...'
 GO
@@ -13,21 +14,79 @@ GO
 -- Fix any RedirectUris that are not valid JSON arrays
 UPDATE [OpenIddictApplications]
 SET [RedirectUris] = '["' + [RedirectUris] + '"]'
-WHERE [RedirectUris] IS NOT NULL 
+WHERE [RedirectUris] IS NOT NULL
   AND [RedirectUris] NOT LIKE '[%'
   AND [RedirectUris] NOT LIKE 'null';
 
 -- Fix any PostLogoutRedirectUris that are not valid JSON arrays
 UPDATE [OpenIddictApplications]
 SET [PostLogoutRedirectUris] = '["' + [PostLogoutRedirectUris] + '"]'
-WHERE [PostLogoutRedirectUris] IS NOT NULL 
+WHERE [PostLogoutRedirectUris] IS NOT NULL
   AND [PostLogoutRedirectUris] NOT LIKE '[%'
   AND [PostLogoutRedirectUris] NOT LIKE 'null';
 
 PRINT 'Malformed URIs fixed (if any).'
 GO
 
--- Now, update or create the web-app client for SampleSPA
+-- =============================================
+-- STEP 2: Ensure required scopes exist
+-- =============================================
+
+PRINT 'Setting up required scopes...'
+GO
+
+-- Insert openid scope if not exists
+IF NOT EXISTS (SELECT 1 FROM [OpenIddictScopes] WHERE [Name] = 'openid')
+BEGIN
+    INSERT INTO [OpenIddictScopes] ([Id], [ConcurrencyToken], [Description], [DisplayName], [Name], [Properties], [Resources])
+    VALUES (NEWID(), NEWID(), 'OpenID Connect scope', 'OpenID', 'openid', NULL, NULL);
+    PRINT '  ✓ Created scope: openid'
+END
+ELSE
+    PRINT '  ✓ Scope exists: openid'
+GO
+
+-- Insert profile scope if not exists
+IF NOT EXISTS (SELECT 1 FROM [OpenIddictScopes] WHERE [Name] = 'profile')
+BEGIN
+    INSERT INTO [OpenIddictScopes] ([Id], [ConcurrencyToken], [Description], [DisplayName], [Name], [Properties], [Resources])
+    VALUES (NEWID(), NEWID(), 'Profile information scope', 'Profile', 'profile', NULL, NULL);
+    PRINT '  ✓ Created scope: profile'
+END
+ELSE
+    PRINT '  ✓ Scope exists: profile'
+GO
+
+-- Insert email scope if not exists
+IF NOT EXISTS (SELECT 1 FROM [OpenIddictScopes] WHERE [Name] = 'email')
+BEGIN
+    INSERT INTO [OpenIddictScopes] ([Id], [ConcurrencyToken], [Description], [DisplayName], [Name], [Properties], [Resources])
+    VALUES (NEWID(), NEWID(), 'Email address scope', 'Email', 'email', NULL, NULL);
+    PRINT '  ✓ Created scope: email'
+END
+ELSE
+    PRINT '  ✓ Scope exists: email'
+GO
+
+-- Insert roles scope if not exists
+IF NOT EXISTS (SELECT 1 FROM [OpenIddictScopes] WHERE [Name] = 'roles')
+BEGIN
+    INSERT INTO [OpenIddictScopes] ([Id], [ConcurrencyToken], [Description], [DisplayName], [Name], [Properties], [Resources])
+    VALUES (NEWID(), NEWID(), 'User roles scope', 'Roles', 'roles', NULL, NULL);
+    PRINT '  ✓ Created scope: roles'
+END
+ELSE
+    PRINT '  ✓ Scope exists: roles'
+GO
+
+PRINT 'Scopes configured.'
+PRINT ''
+GO
+
+-- =============================================
+-- STEP 3: Setup the web-app client
+-- =============================================
+
 PRINT 'Setting up web-app client for SampleSPA...'
 GO
 
@@ -39,18 +98,18 @@ GO
 
 -- Insert the web-app client with correct configuration for SampleSPA
 INSERT INTO [OpenIddictApplications] (
-    [Id], 
-    [ClientId], 
-    [ClientSecret], 
-    [ConcurrencyToken], 
-    [ConsentType], 
-    [DisplayName], 
-    [Permissions], 
-    [PostLogoutRedirectUris], 
-    [Properties], 
-    [RedirectUris], 
-    [Requirements], 
-    [Type]
+    [Id],
+    [ClientId],
+    [ClientSecret],
+    [ConcurrencyToken],
+    [ConsentType],
+    [DisplayName],
+    [Permissions],
+    [PostLogoutRedirectUris],
+    [Properties],
+    [RedirectUris],
+    [Requirements],
+    [ApplicationType]
 )
 VALUES (
     NEWID(),
@@ -91,10 +150,10 @@ PRINT 'Client setup complete!'
 GO
 
 -- Display the created client for verification
-SELECT 
+SELECT
     [ClientId],
     [DisplayName],
-    [Type],
+    [ApplicationType],
     [ConsentType],
     [RedirectUris],
     [PostLogoutRedirectUris],
