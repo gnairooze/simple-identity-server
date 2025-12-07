@@ -110,15 +110,40 @@ http://localhost:8080/index.html
 2. Check that the client is registered in your Identity Server
 3. If using the default setup, the `web-app` client should already exist
 
-## Default Test User
+## Default Test Users
 
-If you're using a fresh Identity Server installation:
+### Pre-configured Test Credentials
 
+If you've run the `setup-test-user.sql` script, you can use these accounts immediately:
+
+| User Type | Email | Password |
+|-----------|-------|----------|
+| **Standard User** | `testuser@example.com` | `Test@1234` |
+| **Admin User** | `admin@example.com` | `Test@1234` |
+
+### Setup Test Users
+
+**Option A: Run the SQL Script**
+```sql
+-- In SQL Server Management Studio, run:
+-- SampleSPA/setup-test-user.sql
+```
+
+**Option B: Use the Registration Page**
 1. Click **"Register"** on the login page
 2. Create a new account with:
    - Email: `test@example.com` (or any valid email format)
    - Password: Must meet complexity requirements (8+ chars, uppercase, lowercase, digit, special char)
 3. The account is created immediately (email confirmation may be optional in dev mode)
+
+### Password Requirements
+
+The password `Test@1234` meets all requirements:
+- ✅ At least 8 characters
+- ✅ Contains uppercase letter (T)
+- ✅ Contains lowercase letters (est)
+- ✅ Contains digit (1234)
+- ✅ Contains special character (@)
 
 ## Next Steps
 

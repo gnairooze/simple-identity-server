@@ -139,11 +139,22 @@ Navigate to:
 http://localhost:8080/index.html
 ```
 
-### 4. Test the Flow
+### 4. Setup Test Users (Optional but Recommended)
+
+Run the test user script to create pre-configured accounts:
+
+```sql
+-- In SQL Server Management Studio, run:
+setup-test-user.sql
+```
+
+### 5. Test the Flow
 
 1. Click **"Login with OAuth 2.0"**
 2. You'll be redirected to Identity Server
-3. Enter your credentials (or register)
+3. Use test credentials:
+   - **Email:** `testuser@example.com`
+   - **Password:** `Test@1234`
 4. After login, you'll see your profile and tokens!
 
 ---
@@ -329,10 +340,20 @@ setup-client.sql
 | Redirect URI | `http://localhost:8080/callback.html` |
 | Scopes | `openid profile email roles` |
 
+### Test User Credentials
+
+| User | Email | Password |
+|------|-------|----------|
+| Standard | `testuser@example.com` | `Test@1234` |
+| Admin | `admin@example.com` | `Test@1234` |
+
+> Run `setup-test-user.sql` to create these users in your database.
+
 ### Important Files to Configure
 
 1. **js/config.js** - Application configuration
 2. **Database** - Client registration via SQL script
+3. **Database** - Test user creation via `setup-test-user.sql`
 
 ### Commands
 
